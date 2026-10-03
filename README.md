@@ -45,19 +45,19 @@ node scripts/share.mjs
 
 Simulation tests cover transfers/conservation/rejected stale epochs, contact impulse while stunned, held cancellation, duplicate movement/cooldowns, forward one-hit attacks, pause, timeout/KO/rematch, delayed historical inputs, zero-puck state, and seam collisions. Browser tests use actual Chrome pages and mouse/pointer events: 568×320 and844×390 landscapes; two phone-sized controllers/two displays; stealing a directional puck; captured hold; duplicate role refusal; reconnect; read-only mirror; phone-first create/claim with no display followed by late Watch. Screenshots live in `test-results/` (local verification artifacts, not committed).
 
-Not yet verified: physical iPhone Safari, real multitouch hardware, public cross-network latency/load, Docker image build in a Docker daemon, Fly runtime, actual Discord unfurl. Keyboard/mouse test input is not a claim of real-phone verification. Audio is a tiny start-gesture bleep, wake lock best effort, no fullscreen/orientation lock requirement.
+Not yet verified: physical iPhone Safari, real multitouch hardware, public cross-network latency/load, physical-device network variability, actual Discord unfurl. Docker image and Fly runtime are now validated. Keyboard/mouse test input is not a claim of real-phone verification. Audio is a tiny start-gesture bleep, wake lock best effort, no fullscreen/orientation lock requirement.
 
 ## Discord sharing
 
 Share the generic landing URL. The server emits OG title/description, canonical absolute generic `og:url`, absolute `og:image`, 1200×630 dimensions/type and Twitter large-image tag on all HTML routes. Metadata never includes room IDs/role secrets; crawler needs no JavaScript. `public/share.png` is an original PNG. Production must set `PUBLIC_URL` correctly. Tests inspect raw HTML, PNG signature/dimensions/MIME and routes. Public Discord unfurl remains unverified until deployment and an actual Discord check.
 
-## Fly.io proposal — approval required before executing
+## Fly.io deployment — approved and live
 
-App `icefight` (name not reserved), existing `personal` organization, Ashburn `iad`, **one** always-on shared-cpu-1x/256MB Machine, port8080, Node22 Alpine, HTTPS, `/health`, shared IPv4 and IPv6. No persistent volume/database/Redis, no multi-region or extra HA Machine. Dockerfile and `fly.toml` are prepared. Existing Fly authentication/account/apps were inspected read-only; other apps/projects were untouched.
+App `icefight` at https://icefight.fly.dev (created and deployed), existing `personal` organization, Ashburn `iad`, **one** always-on shared-cpu-1x/256MB Machine, port8080, Node22 Alpine, HTTPS, `/health`, shared IPv4 and IPv6. No persistent volume/database/Redis, no multi-region or extra HA Machine. Dockerfile and `fly.toml` are prepared. Existing Fly authentication/account/apps were inspected read-only; other apps/projects were untouched.
 
-Official pricing checked: https://docs.fly.io/about/pricing — $2.19 per30days for this Machine in iad, plus $0.02/GB outbound internet traffic; 31-day months cost slightly more. Actual legacy account allowances/taxes/build charges are unverified. Proposed planning budget $5/month is **not** an enforced spending cap. Usage-based billing continues until resources are stopped/deleted; traffic may exceed that budget. No resources have been created and no deployment has occurred.
+Official pricing checked: https://docs.fly.io/about/pricing — $2.19 per30days for this Machine in iad, plus $0.02/GB outbound internet traffic; 31-day months cost slightly more. Actual legacy account allowances/taxes/build charges are unverified. Proposed planning budget $5/month is **not** an enforced spending cap. Usage-based billing continues until resources are stopped/deleted; traffic may exceed that budget. User explicitly approved this deployment and the icefight name. One live Machine827514a7957618 is running in iad; public health and configuration verified. Both browser acceptance suites also passed against the public HTTPS/WSS hostname.
 
-Only after explicit approval of provider/configuration/spend:
+Commands used for the approved deployment (do not recreate the existing app):
 
 ```sh
 fly apps create icefight --org personal
