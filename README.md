@@ -41,6 +41,7 @@ node tests/browser.mjs
 node tests/phone-flow.mjs
 node tests/playtest-browser.mjs
 node tests/banner-browser.mjs
+node tests/waiting-browser.mjs
 # Recreate original procedural share art:
 node scripts/share-placeholder.mjs
 ```
@@ -79,3 +80,12 @@ Official guidance: https://support.apple.com/guide/iphone/bookmark-a-website-iph
 Touch-action, selection, long-press callout and context-menu suppression are scoped to the rink. Empty ice contacts produce no action or sound. Lobby/forms retain ordinary interaction and controller has an explicit Lobby exit. Real physical iPhone Safari/installed-mode feel still requires user testing.
 
 Latest local validation:15simulation tests and browser grab/drag/fling, stable origin color, all six attack buttons,300second timer, viewport pairing568×320 against844×390, dynamic260/320/390heights, simulated44px side/20px bottom safe areas, resize cancellation, inert background and standalone manifest passed. Source banner SHA256:563e9f74024ba5794f66c23f53b0370f63f1744753ade6dae450ef59507dc6a4 (unchanged).
+
+
+## Initial waiting rink
+
+Before the second controller connects for the first match, the connected player can shove, grab, drag and fling every local puck. Fighters and the 300-second clock remain frozen. A bright orange plastic barrier closes the top seam; the server clamps dragged targets and resolves physics/collision movement against its 32-unit thickness. No puck crosses ownership while waiting. The absent side stays still.
+
+The first simultaneous connection starts the match without resetting arranged puck positions. A control epoch advances, historical waiting contacts are discarded, and held fingers are cancelled without a fling or combat activation. The orange panels retract toward both edges over 650ms. Normal transfer begins immediately when the match starts. Layout changes still cancel holds and negotiate identical CSS rink dimensions. Waiting reconnects retain the barrier/arrangement; later mid-match disconnects retain the existing frozen pause with an open seam, never reopening practice mode. Rematches also retain normal match pause behavior.
+
+Validated by 19 simulation tests plus Chrome waiting/active pointer tests, reconnect, cancellation, seam containment, preserved arrangement and colors, equal shared dimensions, visible retraction frames, and a read-only fight display. Physical iPhone Safari/multitouch remain unverified.

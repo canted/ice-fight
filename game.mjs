@@ -1,5 +1,5 @@
 export const W = 900, H = 420, R = 37;
-export const GRAB_RADIUS = R * .62, EDGE_IMPULSE = 140, MAX_FLING = 620;
+export const GRAB_RADIUS = R * .62, EDGE_IMPULSE = 140, MAX_FLING = 620, BARRIER_DEPTH = 32;
 export const ATTACKS = {
  lp: {name:'Light punch', damage:5, reach:105, windup:.08, active:.10, recovery:.18, stun:.12, push:10},
  mp: {name:'Medium punch',damage:9,reach:125,windup:.14,active:.12,recovery:.28,stun:.18,push:18},
@@ -12,14 +12,14 @@ export const actions = ['left','right','up','down',...Object.keys(ATTACKS)];
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const cap=(x,y,max)=>{const k=Math.min(1,max/(Math.hypot(x,y)||1));return [x*k,y*k];};
 export class Game {
- constructor({roundSeconds=300}={}){this.roundSeconds=roundSeconds;this.viewports=[null,null];this.layout={width:900,height:420,epoch:0};this.round=0;this.tick=0;this.connected=[false,false];this.reset();}
+ constructor({roundSeconds=300}={}){this.roundSeconds=roundSeconds;this.viewports=[null,null];this.layout={width:900,height:420,epoch:0};this.started=false;this.controlEpoch=0;this.round=0;this.tick=0;this.connected=[false,false];this.reset();}
  reset(){
   this.round++;this.time=this.roundSeconds;this.result=null;this.holds=[new Map(),new Map()];this.pressed=[new Set(),new Set()];
   this.fighters=[0,1].map(i=>({x:i?625:275,y:0,vy:0,hp:100,facing:i?-1:1,attack:null,cool:Object.fromEntries(Object.keys(ATTACKS).map(k=>[k,0])),stun:0}));
   this.pucks=[0,1].flatMap(owner=>actions.map((action,i)=>({id:`${owner}-${i}`,origin:owner,owner,epoch:0,action,x:90+(i%5)*180,y:120+Math.floor(i/5)*190,vx:(i%2?1:-1)*16,vy:8})));this.history=[];
  }
  grabFor(p){return [...this.holds[p.owner].values()].find(h=>h.id===p.id&&h.mode==='grab');}
- snapshot(){return {layout:{...this.layout},tick:this.tick,round:this.round,time:this.time,result:this.result,paused:!this.connected.every(Boolean),connected:this.connected,pucks:this.pucks.map(p=>({...p,grabbed:!!this.grabFor(p)})),fighters:structuredClone(this.fighters),counts:[0,1].map(i=>this.pucks.filter(p=>p.owner===i).length)};}
+ snapshot(){return {waiting:!this.started,controlEpoch:this.controlEpoch,layout:{...this.layout},tick:this.tick,round:this.round,time:this.time,result:this.result,paused:!this.connected.every(Boolean),connected:this.connected,pucks:this.pucks.map(p=>({...p,grabbed:!!this.grabFor(p)})),fighters:structuredClone(this.fighters),counts:[0,1].map(i=>this.pucks.filter(p=>p.owner===i).length)};}
  setViewport(owner,width,height){
   if(!Number.isFinite(width)||!Number.isFinite(height)||width<100||height<80||width>4000||height>3000)return false;
   this.viewports[owner]={width,height};const views=this.viewports.filter(Boolean),scale=Math.min(...views.map(v=>Math.min(v.width/W,v.height/H)));
@@ -38,13 +38,14 @@ export class Game {
  input(owner,m){
   if(m.type==='viewport')return this.setViewport(owner,m.width,m.height);
   const key=String(m.pointer);
+  if(m.controlEpoch!==undefined&&m.controlEpoch!==this.controlEpoch)return false;
   if(m.layoutEpoch!==undefined&&m.layoutEpoch!==this.layout.epoch)return false;
   if(m.type==='release'){if(m.round!==this.round)return false;this.release(owner,key,m.fling===true,false,m.at);return true;}
-  if(this.result||!this.connected.every(Boolean)||m.round!==this.round||!Number.isInteger(m.tick)||m.tick>this.tick||this.tick-m.tick>45||!Number.isFinite(m.x)||!Number.isFinite(m.y))return false;
+  if(this.result||!this.connected[owner]||(this.started&&!this.connected.every(Boolean))||m.round!==this.round||!Number.isInteger(m.tick)||m.tick>this.tick||this.tick-m.tick>45||!Number.isFinite(m.x)||!Number.isFinite(m.y))return false;
   const p=this.pucks.find(p=>p.id===m.id);if(!p||p.owner!==owner||p.epoch!==m.epoch)return false;
   if(m.type==='move'){
    const h=this.holds[owner].get(key);if(!h||h.mode!=='grab'||h.id!==p.id||h.epoch!==p.epoch)return false;
-   h.targetX=clamp(m.x+h.offsetX,R,W-R);h.targetY=clamp(m.y+h.offsetY,-R,H-R);
+   h.targetX=clamp(m.x+h.offsetX,R,W-R);h.targetY=clamp(m.y+h.offsetY,this.started?-R:R+BARRIER_DEPTH,H-R);
    if(Number.isFinite(m.at)&&(!h.moves.length||m.at>h.moves.at(-1).at)){const last=h.moves.at(-1);if(last&&m.at-last.at>100)h.moves.push({at:m.at-16,x:last.x,y:last.y});h.moves.push({at:m.at,x:h.targetX,y:h.targetY});h.moves=h.moves.filter(s=>s.at>=m.at-150).slice(-12);}return true;
   }
   if(m.type!=='touch'||this.pressed[owner].has(key)||[...this.holds[owner].values()].some(h=>h.id===p.id))return false;
@@ -55,12 +56,14 @@ export class Game {
   const h={id:p.id,action:p.action,epoch:p.epoch,mode,offsetX:dx,offsetY:dy,targetX:p.x,targetY:p.y,samples:[{tick:this.tick,x:p.x,y:p.y}],moves:Number.isFinite(m.at)?[{at:m.at,x:p.x,y:p.y}]:[]};
   this.pressed[owner].add(key);this.holds[owner].set(key,h);
   if(mode==='grab'){p.vx=p.vy=0;}else{const strength=clamp((d-GRAB_RADIUS)/(R-GRAB_RADIUS),0,1)*EDGE_IMPULSE;[p.vx,p.vy]=cap(p.vx+dx/d*strength,p.vy+dy/d*strength,320);}
+  if(!this.started)return true;
   const f=this.fighters[owner],attack=ATTACKS[p.action];
   if(p.action==='up'&&f.y===0&&f.stun<=0&&!f.attack)f.vy=440;
   if(attack&&f.stun<=0&&!f.attack&&f.cool[p.action]<=0){f.attack={kind:p.action,age:0,hit:false,duration:attack.windup+attack.active+attack.recovery};f.cool[p.action]=f.attack.duration;}
   return true;
  }
  transfer(p){
+  if(!this.started){if(p.y<R+BARRIER_DEPTH){p.y=R+BARRIER_DEPTH;p.vy=Math.abs(p.vy)*.95;}return;}
   if(p.y>=0)return;
   const prev=p.owner;
   for(const [key,h] of this.holds[prev])if(h.id===p.id)this.release(prev,key,true,true);
@@ -68,7 +71,7 @@ export class Game {
  }
  collide(){
   for(let i=0;i<this.pucks.length;i++)for(let j=i+1;j<this.pucks.length;j++){
-   const a=this.pucks[i],b=this.pucks[j],flip=a.owner!==b.owner,sign=flip?-1:1;
+   const a=this.pucks[i],b=this.pucks[j];if(!this.started&&(a.owner!==b.owner||!this.connected[a.owner]))continue;const flip=a.owner!==b.owner,sign=flip?-1:1;
    const dx=(flip?W-b.x:b.x)-a.x,dy=(flip?-b.y:b.y)-a.y,d=Math.hypot(dx,dy);
    if(d<=0||d>=R*2)continue;
    const ma=this.grabFor(a)?0:1,mb=this.grabFor(b)?0:1,sum=ma+mb;if(!sum)continue;
@@ -80,9 +83,14 @@ export class Game {
  }
  step(dt=1/60){
   this.tick++;
-  if(this.connected.every(Boolean)&&!this.result){
-   this.time=Math.max(0,this.time-dt);
+  if(!this.started&&this.connected.every(Boolean)){
+   this.started=true;this.controlEpoch++;this.history=[];
+   for(const owner of [0,1])for(const key of [...this.holds[owner].keys()])this.release(owner,key,false,true);
+  }
+  const running=this.started&&this.connected.every(Boolean)&&!this.result;
+  if((!this.started&&this.connected.some(Boolean))||running){
    for(const p of this.pucks){
+    if(!this.started&&!this.connected[p.owner])continue;
     const h=this.grabFor(p);
     if(h){const [dx,dy]=cap(h.targetX-p.x,h.targetY-p.y,1200*dt);p.x+=dx;p.y+=dy;p.vx=p.vy=0;h.samples.push({tick:this.tick,x:p.x,y:p.y});h.samples=h.samples.filter(s=>s.tick>=this.tick-6);}
     else{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.exp(-.32*dt);p.vy*=Math.exp(-.32*dt);}
@@ -90,6 +98,9 @@ export class Game {
     this.transfer(p);
    }
    this.collide();for(const p of this.pucks)this.transfer(p);
+  }
+  if(running){
+   this.time=Math.max(0,this.time-dt);
    this.fighters.forEach((f,i)=>{
     const o=this.fighters[1-i];f.stun=Math.max(0,f.stun-dt);for(const k of Object.keys(ATTACKS))f.cool[k]=Math.max(0,f.cool[k]-dt);
     const held=new Set([...this.holds[i].values()].map(h=>h.action));f.crouch=held.has('down')&&f.y===0;
