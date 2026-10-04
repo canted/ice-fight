@@ -1,0 +1,28 @@
+import {chromium} from 'playwright';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';
+const base=process.env.TEST_URL||'http://localhost:3001',sleep=ms=>new Promise(r=>setTimeout(r,ms));const browser=await chromium.launch({channel:'chrome',headless:true});
+try{
+ const c=await browser.newContext({viewport:{width:844,height:390},hasTouch:true});
+ await c.routeWebSocket('**',route=>{const server=route.connectToServer();route.onMessage(raw=>setTimeout(()=>server.send(raw),100));server.onMessage(raw=>setTimeout(()=>route.send(raw),100));});
+ await c.route('**/app.js',async route=>{let source=await readFile('public/app.js','utf8');source=source.replace('function draw(){',"function draw(){window.releaseDebug={state,active:[...active.keys()],predictions:[...settling.keys()],drawn:state?renderPucks():[]};window.disconnectTest=()=>ws.close();window.getReleaseDebug=()=>({active:[...active.values()],predictions:[...settling.keys()]});");await route.fulfill({body:source,contentType:'text/javascript'});});
+ const d=await(await fetch(base+'/api/rooms',{method:'POST'})).json(),urls=[];for(let i=0;i<2;i++)urls.push((await(await fetch(base+`/api/rooms/${d.id}/claim?slot=${i}`,{method:'POST'})).json()).player);
+ const p=await c.newPage(),errors=[];p.on('pageerror',e=>errors.push(String(e)));await p.goto(base+urls[0]);await p.waitForFunction(()=>window.releaseDebug?.state?.waiting);await sleep(300);
+ let box=await p.locator('canvas').boundingBox();const xy=(x,y)=>({x:box.x+x/900*box.width,y:box.y+y/420*box.height});
+ const grab=async action=>{box=await p.locator('canvas').boundingBox();const q=await p.evaluate(action=>window.releaseDebug.drawn.find(q=>q.owner===0&&q.action===action),action);const at=xy(q.x,q.y);await p.mouse.move(at.x,at.y);await p.mouse.down();await sleep(270);assert.ok(await p.evaluate(id=>window.getReleaseDebug().active.some(h=>h.id===id&&h.grab),q.id),'grab '+action);return q.id;};
+ const move=async(x,y)=>{const at=xy(x,y);await p.mouse.move(at.x,at.y);};
+ // A predicted upward flight remains contained behind the practice barrier.
+ const barrierId=await grab('left');await move(360,150);await sleep(350);for(let y=140;y>=90;y-=10){await move(360,y);await sleep(14);}await p.mouse.up();for(let i=0;i<30;i++){const q=await p.evaluate(id=>window.releaseDebug.drawn.find(q=>q.id===id),barrierId);assert.ok(q.y>=69-.01);assert.equal(q.owner,0);await sleep(16);}
+ // A newly released predicted puck remains touchable before its release acknowledgement arrives.
+ await grab('mp');await move(300,220);await sleep(350);for(let x=320;x<=400;x+=20){await move(x,220);await sleep(14);}await p.mouse.up();await sleep(120);await grab('mp');await p.mouse.up();await sleep(300);
+ const p2=await c.newPage();await p2.goto(base+urls[1]);await p.waitForFunction(()=>window.releaseDebug.state.connected.every(Boolean)&&!window.releaseDebug.state.waiting);await sleep(350);box=await p.locator('canvas').boundingBox();
+ // One finger can release into flight while the other remains captured, then cancels independently.
+ const touchPucks=await p.evaluate(()=>['lk','hk'].map(action=>window.releaseDebug.drawn.find(q=>q.owner===0&&q.action===action))),cd=await c.newCDPSession(p);
+ let touches=touchPucks.map((q,i)=>({...xy(q.x,q.y),id:i+1}));await cd.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:touches});await p.waitForFunction(()=>window.releaseDebug.active.length===2);await sleep(270);
+ for(let i=1;i<=4;i++){touches[0]={...xy(touchPucks[0].x+i*10,touchPucks[0].y),id:1};await cd.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:touches});await sleep(16);}
+ await cd.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[touches[0]]});await p.waitForFunction(()=>window.releaseDebug.active.length===1);await p.waitForFunction(id=>window.releaseDebug.predictions.includes(id),touchPucks[0].id);
+ await cd.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});await p.waitForFunction(()=>window.releaseDebug.active.length===0);await p.waitForFunction(ids=>ids.every(id=>!window.releaseDebug.state.pucks.find(q=>q.id===id).grabbed),touchPucks.map(q=>q.id));
+ // Release before the seam; only the authority is allowed to transfer ownership in flight.
+ const id=await grab('up');await move(550,150);await sleep(350);for(let y=140;y>=60;y-=10){await move(550,y);await sleep(14);}await p.mouse.up();await p.waitForFunction(id=>window.releaseDebug.state.pucks.find(q=>q.id===id).owner===1,id);assert.ok(!await p.evaluate(id=>window.releaseDebug.predictions.includes(id),id));assert.equal(await p.evaluate(()=>window.releaseDebug.state.pucks.length),20);
+ // Resize cancels an active throw prediction; disconnect cancels one as well.
+ for(const kind of ['resize','disconnect']){const flight=await grab(kind==='resize'?'hp':'hk');await move(650,220);await sleep(300);for(let x=660;x<=700;x+=10){await move(x,220);await sleep(14);}await p.mouse.up();await p.waitForFunction(id=>window.releaseDebug.predictions.includes(id),flight);if(kind==='resize'){await p.setViewportSize({width:568,height:320});box=await p.locator('canvas').boundingBox();}else await p.evaluate(()=>window.disconnectTest());await p.waitForFunction(()=>window.releaseDebug.predictions.length===0&&window.releaseDebug.active.length===0);await sleep(400);}
+ assert.deepEqual(errors,[]);await c.close();console.log('PASS release prediction: waiting barrier bounce, in-flight authoritative transfer/conservation, independent two-touch release/cancel, resize and disconnect cleanup at 200ms simulated RTT.');
+}finally{await browser.close();}

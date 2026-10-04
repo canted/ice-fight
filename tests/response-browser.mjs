@@ -1,5 +1,5 @@
 import {chromium} from 'playwright';import {WebSocket} from 'ws';import assert from 'node:assert/strict';import {mkdir,writeFile} from 'node:fs/promises';
-const base='http://localhost:3000',sleep=ms=>new Promise(r=>setTimeout(r,ms));await mkdir('test-results',{recursive:true});const browser=await chromium.launch({channel:'chrome',headless:true});let observer;const stats=[];
+const base=process.env.TEST_URL||'http://localhost:3000',sleep=ms=>new Promise(r=>setTimeout(r,ms));await mkdir('test-results',{recursive:true});const browser=await chromium.launch({channel:'chrome',headless:true});let observer;const stats=[];
 try{for(const delay of [0,100]){
  const d=await (await fetch(base+'/api/rooms',{method:'POST'})).json(),urls=[];for(let i=0;i<2;i++)urls.push((await (await fetch(base+`/api/rooms/${d.id}/claim?slot=${i}`,{method:'POST'})).json()).player);
  let snap;observer=new WebSocket(base.replace(/^http/,'ws'));observer.on('open',()=>observer.send(JSON.stringify({type:'join',role:'display',room:d.id})));observer.on('message',s=>{const m=JSON.parse(s);if(m.type==='state')snap=m;});

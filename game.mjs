@@ -1,3 +1,4 @@
+import {recordMove,flingVelocity} from './public/puck-motion.js';
 export const W = 900, H = 420, R = 37;
 export const GRAB_RADIUS = R * .72, TAP_RADIUS = R * .25, CENTER_IMPULSE = 6, CENTER_EDGE_IMPULSE = 6, TAP_TICKS = 12, EDGE_IMPULSE = 140, MAX_FLING = 620, BARRIER_DEPTH = 32;
 export const ATTACKS = {
@@ -31,8 +32,7 @@ export class Game {
   const key=String(pointer),h=this.holds[owner].get(key),p=h&&this.pucks.find(p=>p.id===h.id);
   if(h?.mode==='grab'&&p&&p.owner===owner&&p.epoch===h.epoch){p.vx=p.vy=0;if(fling&&h.dragged&&h.samples.length>1){const latest=h.samples.at(-1),first=h.samples.find(s=>s.tick>=this.tick-5)||latest;const dt=(this.tick-first.tick)/60;if(dt>0&&this.tick-latest.tick<=5){[p.vx,p.vy]=cap((p.x-first.x)/dt,(p.y-first.y)/dt,MAX_FLING);if(Math.hypot(p.vx,p.vy)<45)p.vx=p.vy=0;}}}
   if(fling&&h?.dragged&&h?.mode==='grab'&&p&&p.owner===owner&&Number.isFinite(at)&&h.moves.length>1){
-   const last=h.moves.at(-1),first=h.moves.find(s=>s.at>=last.at-100)||last;
-   if(at>=last.at&&at-last.at<=120&&last.at>first.at){const dt=Math.max(8,last.at-first.at)/1000;[p.vx,p.vy]=cap((last.x-first.x)/dt,(last.y-first.y)/dt,MAX_FLING);if(Math.hypot(last.x-first.x,last.y-first.y)<8)p.vx=p.vy=0;}else p.vx=p.vy=0;
+   Object.assign(p,flingVelocity(h.moves,at));
   }
   if(fling&&h?.mode==='grab'&&!h.dragged&&this.tick-h.touchTick<=TAP_TICKS&&p&&p.owner===owner&&p.epoch===h.epoch){p.vx=h.tapVX;p.vy=h.tapVY;}
   this.holds[owner].delete(key);if(!keepPressed)this.pressed[owner].delete(key);
@@ -51,7 +51,7 @@ export class Game {
    const dx=m.x-h.touchX,dy=m.y-h.touchY;
    if(!h.dragged&&Math.hypot(dx,dy)<=6)return true;
    h.dragged=true;h.targetX=clamp(h.anchorX+dx,R,W-R);h.targetY=clamp(h.anchorY+dy,this.started?-R:R+BARRIER_DEPTH,H-R);
-   if(Number.isFinite(m.at)&&(!h.moves.length||m.at>h.moves.at(-1).at)){const last=h.moves.at(-1);if(last&&m.at-last.at>100)h.moves.push({at:m.at-16,x:last.x,y:last.y});h.moves.push({at:m.at,x:h.targetX,y:h.targetY});h.moves=h.moves.filter(s=>s.at>=m.at-150).slice(-12);}return true;
+   h.moves=recordMove(h.moves,m.at,h.targetX,h.targetY);return true;
   }
   if(m.type!=='touch'||this.pressed[owner].has(key)||[...this.holds[owner].values()].some(h=>h.id===p.id))return false;
   const old=this.history.find(s=>s.tick===m.tick)?.pucks.find(q=>q.id===p.id);

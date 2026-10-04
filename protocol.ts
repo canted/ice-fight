@@ -6,4 +6,4 @@ export type Input = {seq:number;round:number;layoutEpoch?:number;controlEpoch?:n
 export interface Puck {id:string;origin:Player;owner:Player;grabbed?:boolean;epoch:number;action:Action;x:number;y:number;vx:number;vy:number}
 
 /** accepted is puck contact/input validity; actionAccepted is separate combat legality. */
-export interface InputAck {type:'ack';inputType:'touch'|'release';seq:number;pointer:number;id?:string;epoch?:number;round:number;controlEpoch:number;layoutEpoch:number;accepted:boolean;grab:boolean;actionAccepted:boolean;practice:boolean;tick:number;inputTick?:number}
+export interface InputAck {type:'ack';inputType:'touch'|'release';seq:number;pointer:number;id?:string;epoch?:number;round:number;controlEpoch:number;layoutEpoch:number;accepted:boolean;grab:boolean;actionAccepted:boolean;practice:boolean;tick:number;inputTick?:number;puck?:Puck}
