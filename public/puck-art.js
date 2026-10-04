@@ -5,8 +5,8 @@ export const attackGlyphs = {
 };
 export function puckPath(c,action){
  c.beginPath();const g=attackGlyphs[action];
- if(g?.shape==='hexagon'){for(let i=0;i<6;i++){const a=i*Math.PI/3,x=Math.cos(a)*35,y=Math.sin(a)*35;i?c.lineTo(x,y):c.moveTo(x,y);}c.closePath();}
- else if(g?.shape==='square')c.roundRect(-25,-25,50,50,4);
+ if(g?.shape==='hexagon'){for(let i=0;i<6;i++){const a=i*Math.PI/3,x=Math.cos(a)*38.5,y=Math.sin(a)*38.5;i?c.lineTo(x,y):c.moveTo(x,y);}c.closePath();}
+ else if(g?.shape==='square')c.roundRect(-30,-30,60,60,4.8);
  else c.arc(0,0,35,0,7);
 }
 export function attackDots(c,action){const g=attackGlyphs[action];if(!g)return;c.fillStyle='#000000';for(let i=0;i<g.dots;i++){c.beginPath();c.arc((i-(g.dots-1)/2)*13,0,4.5,0,Math.PI*2);c.fill();}}

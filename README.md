@@ -103,3 +103,9 @@ Punch pucks are hexagons and kick pucks are squares. One/two/three black dots in
 ## Local responsiveness refinement
 
 White contact feedback is immediate; yellow (with original-player outline) means a server-accepted legal action or waiting-room practice press. Cooldown/recovery/ownership rejection does not flash successful yellow. Generous72% grabs are separate from the25% tap plateau. Local visual drag prediction and frame-coalesced input reduce finger lag while ownership/combat remain authoritative. See [measurements and limits](docs/responsiveness.md). This new refinement has not been deployed.
+
+## Local attack-shape sizing revision
+
+Kick square paths are60×60 instead of50×50 (+20% width/height); rounded corners scale from4 to4.8. Punch hexagon vertex radius is38.5 instead of35 (+10% in both linear dimensions). Dots, directional pucks, original-color/white/yellow feedback, collision radius37, grab radius26.64 and tap plateau radius9.25 are unchanged. Shadows use the same enlarged paths.
+
+Visible hit-area mismatch is intentional under the unchanged circular-physics requirement: hexagon tips extend1.5 logical pixels past the touch circle; rounded square corners extend about3.44 pixels, before outline thickness. Decorative edges may slightly overlap at collision contact or clip at the outer canvas wall. The waiting barrier still clears the enlarged vertical shape extents. These are visual-only changes, tested locally; deployment needs approval for this revision.
