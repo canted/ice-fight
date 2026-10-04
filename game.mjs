@@ -1,5 +1,5 @@
 import {recordMove,flingVelocity} from './public/puck-motion.js';
-export const W = 900, H = 420, R = 37;
+export const W = 900, H = 420, R = 37, HISTORY_TICKS = 120;
 export const GRAB_RADIUS = R * .72, TAP_RADIUS = R * .25, CENTER_IMPULSE = 6, CENTER_EDGE_IMPULSE = 6, TAP_TICKS = 12, EDGE_IMPULSE = 140, MAX_FLING = 620, BARRIER_DEPTH = 32;
 export const ATTACKS = {
  lp: {name:'Light punch', damage:5, reach:105, windup:.08, active:.10, recovery:.18, stun:.12, push:10},
@@ -44,7 +44,7 @@ export class Game {
   if(m.controlEpoch!==undefined&&m.controlEpoch!==this.controlEpoch)return false;
   if(m.layoutEpoch!==undefined&&m.layoutEpoch!==this.layout.epoch)return false;
   if(m.type==='release'){if(m.round!==this.round)return false;this.release(owner,key,m.fling===true,false,m.at);return true;}
-  if(this.result||!this.connected[owner]||(this.started&&!this.connected.every(Boolean))||m.round!==this.round||!Number.isInteger(m.tick)||m.tick>this.tick||this.tick-m.tick>45||!Number.isFinite(m.x)||!Number.isFinite(m.y))return false;
+  if(this.result||!this.connected[owner]||(this.started&&!this.connected.every(Boolean))||m.round!==this.round||!Number.isInteger(m.tick)||m.tick>this.tick||this.tick-m.tick>HISTORY_TICKS||!Number.isFinite(m.x)||!Number.isFinite(m.y))return false;
   const p=this.pucks.find(p=>p.id===m.id);if(!p||p.owner!==owner||p.epoch!==m.epoch)return false;
   if(m.type==='move'){
    const h=this.holds[owner].get(key);if(!h||h.mode!=='grab'||h.id!==p.id||h.epoch!==p.epoch)return false;
@@ -58,6 +58,11 @@ export class Game {
   if(!old||old.owner!==owner||old.epoch!==p.epoch)return false;
   const dx=old.x-m.x,dy=old.y-m.y,d=Math.hypot(dx,dy);if(d>R+8)return false;
   const mode=d<=GRAB_RADIUS?'grab':'edge';
+  // A just-arrived puck can be caught where it was visibly presented, once per crossing.
+  // This changes only its controller-rink position; combat still uses authoritative fighter state.
+  const v=m.view,e=p.entry;
+  if(mode==='grab'&&v&&e?.epoch===p.epoch&&!e.caught&&this.tick-e.tick<=30&&Number.isFinite(v.x)&&Number.isFinite(v.y)&&v.x>=R&&v.x<=W-R&&v.y>=0&&v.y<=Math.min(H-R,old.y+R)&&v.x>=Math.min(e.x,old.x)-R&&v.x<=Math.max(e.x,old.x)+R){p.x=v.x;p.y=v.y;p.entry={...e,caught:true};}
+
   const h={id:p.id,action:p.action,epoch:p.epoch,mode,touchTick:this.tick,tapVX:(d>1e-6?dx/d:0)*tapImpulse(d),tapVY:(d>1e-6?dy/d:-1)*tapImpulse(d),touchX:m.x,touchY:m.y,anchorX:p.x,anchorY:p.y,dragged:false,targetX:p.x,targetY:p.y,samples:[{tick:this.tick,x:p.x,y:p.y}],moves:Number.isFinite(m.at)?[{at:m.at,x:p.x,y:p.y}]:[]};
   this.pressed[owner].add(key);this.holds[owner].set(key,h);
   if(mode==='grab'){p.vx=p.vy=0;}else{const strength=tapImpulse(d);[p.vx,p.vy]=cap(p.vx+dx/d*strength,p.vy+dy/d*strength,320);}
@@ -74,7 +79,7 @@ export class Game {
   if(p.y>=0)return;
   const prev=p.owner;
   for(const [key,h] of this.holds[prev])if(h.id===p.id)this.release(prev,key,true,true);
-  p.owner=1-prev;p.epoch++;p.x=W-p.x;p.y=-p.y;p.vx=-p.vx;p.vy=-p.vy;
+  p.owner=1-prev;p.epoch++;p.x=W-p.x;p.y=-p.y;p.vx=-p.vx;p.vy=-p.vy;p.entry={epoch:p.epoch,tick:this.tick,x:clamp(p.x,R,W-R)};
  }
  collide(){
   for(let i=0;i<this.pucks.length;i++)for(let j=i+1;j<this.pucks.length;j++){
@@ -113,10 +118,14 @@ export class Game {
     const held=new Set([...this.holds[i].values()].map(h=>h.action));f.crouch=held.has('down')&&f.y===0;
     if(!f.attack&&f.stun<=0){if(f.y===0)f.facing=o.x>=f.x?1:-1;f.x+=(Number(held.has('right'))-Number(held.has('left')))*230*dt;}
     f.vy-=1050*dt;f.y=Math.max(0,f.y+f.vy*dt);if(f.y===0)f.vy=0;f.x=clamp(f.x,65,835);
-    if(f.attack){const a=f.attack,s=ATTACKS[a.kind];a.age+=dt;if(!a.hit&&a.age>=s.windup&&a.age<s.windup+s.active&&(o.x-f.x)*f.facing>0&&Math.abs(o.x-f.x)<s.reach&&Math.abs(o.y-f.y)<85){a.hit=true;o.hp=Math.max(0,o.hp-s.damage*(o.crouch?.65:1));o.stun=s.stun;o.x=clamp(o.x+f.facing*s.push,65,835);}if(a.age>=a.duration)f.attack=null;}
+    if(f.attack){f.attack.age+=dt;if(f.attack.age>=f.attack.duration)f.attack=null;}
    });
+   // Both fighters' active hits are decided before either knockback is applied.
+   const hits=[];
+   this.fighters.forEach((f,i)=>{const o=this.fighters[1-i],a=f.attack;if(!a)return;const s=ATTACKS[a.kind];if(!a.hit&&a.age>=s.windup&&a.age<s.windup+s.active&&(o.x-f.x)*f.facing>0&&Math.abs(o.x-f.x)<s.reach&&Math.abs(o.y-f.y)<85){a.hit=true;hits.push({o,damage:s.damage*(o.crouch?.65:1),stun:s.stun,push:f.facing*s.push});}});
+   for(const h of hits){h.o.hp=Math.max(0,h.o.hp-h.damage);h.o.stun=h.stun;h.o.x=clamp(h.o.x+h.push,65,835);}
    if(this.fighters.some(f=>f.hp<=0)||this.time<=0){const [a,b]=this.fighters;this.result=a.hp===b.hp?'DRAW':a.hp>b.hp?'CORAL WINS':'MINT WINS';this.release(0);this.release(1);}
   }
-  this.history.push({tick:this.tick,pucks:this.pucks.map(p=>({...p}))});if(this.history.length>50)this.history.shift();
+  this.history.push({tick:this.tick,pucks:this.pucks.map(p=>({...p}))});if(this.history.length>HISTORY_TICKS+5)this.history.shift();
  }
 }

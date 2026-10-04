@@ -44,3 +44,15 @@ export class ReleaseMotion {
   this.x=Math.max(37,Math.min(863,this.x));this.y=Math.min(383,waiting?Math.max(69,this.y):this.y);return this;
  }
 }
+
+// A received transfer is visible at the seam on its first painted frame. Ownership is never delayed.
+export class EdgeEntry {
+ constructor(p){this.epoch=p.epoch;this.x=Math.max(37,Math.min(863,p.entry?.epoch===p.epoch?p.entry.x:p.x));this.startedAt=null;this.presented=false;this.done=false;}
+ render(p,now){if(!this.presented)this.startedAt=now;this.startedAt??=now;const t=Math.max(0,Math.min(1,(now-this.startedAt)/250)),a=t*t*(3-2*t);this.done=t===1;return {...p,x:this.x+(p.x-this.x)*a,y:Math.max(0,p.y)*a};}
+}
+export function syncEntries(entries,previous,state,owner){
+ for(const [id,e]of entries)if(!state.pucks.some(p=>p.id===id&&p.owner===owner&&p.epoch===e.epoch))entries.delete(id);
+ // Existing pucks on initial load/reconnect are a snapshot, not new transfers.
+ if(!previous||previous.round!==state.round||previous.controlEpoch!==state.controlEpoch||state.waiting)return;
+ for(const p of state.pucks){const old=previous.pucks.find(q=>q.id===p.id);if(p.owner===owner&&old&&(old.owner!==owner||old.epoch!==p.epoch))entries.set(p.id,new EdgeEntry(p));}
+}

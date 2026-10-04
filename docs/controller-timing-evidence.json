@@ -1,0 +1,226 @@
+{
+  "timestampOrdering": {
+    "bufferMs": 200,
+    "controllers": [
+      {
+        "player": 0,
+        "oneWayDelayMs": 160,
+        "clockOrigin": 50000,
+        "clockRttMs": 321.3894170000058,
+        "eventTime": 256741.70349949997,
+        "effectiveTime": 256749.0642916663,
+        "lateMs": 0
+      },
+      {
+        "player": 1,
+        "oneWayDelayMs": 20,
+        "clockOrigin": -900000,
+        "clockRttMs": 42.87395799998194,
+        "eventTime": 256790.708646,
+        "effectiveTime": 256799.06429166626,
+        "lateMs": 0
+      }
+    ],
+    "authoredGapMs": 49.00514650004334,
+    "appliedGapMs": 49.999999999970896,
+    "lateEvent": {
+      "lateMs": 584.021500165516,
+      "effectiveTime": 258115.73095833216
+    },
+    "identicalMirrorSnapshots": 44
+  },
+  "entryBefore": {
+    "baseline": true,
+    "simulatedOneWayDelayMs": 100,
+    "orderedJitter": true,
+    "firstRendered": {
+      "x": 544.3438239174505,
+      "y": 28.43977901826061
+    },
+    "firstDeliveredAuthority": {
+      "x": 544.3438239174505,
+      "y": 28.43977901826061,
+      "tick": 158,
+      "entry": {
+        "epoch": 1,
+        "tick": 156,
+        "x": 544.3438239174505
+      }
+    },
+    "id": "0-6"
+  },
+  "entryAfter": {
+    "baseline": false,
+    "simulatedOneWayDelayMs": 100,
+    "orderedJitter": true,
+    "firstRendered": {
+      "x": 545.6591125116931,
+      "y": 0
+    },
+    "firstDeliveredAuthority": {
+      "x": 545.6591125116931,
+      "y": 38.0058500766914,
+      "tick": 171,
+      "entry": {
+        "epoch": 1,
+        "tick": 168,
+        "x": 545.6591125116931
+      }
+    },
+    "id": "0-6"
+  },
+  "releaseRegression": [
+    {
+      "kind": "fast",
+      "jitter": false,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 0,
+      "maxBackwardPx": 0,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 16.200000286102295
+    },
+    {
+      "kind": "hold-flick",
+      "jitter": false,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 0,
+      "maxBackwardPx": 0,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 30.199999809265137
+    },
+    {
+      "kind": "stationary",
+      "jitter": false,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 0.8231612704378222,
+      "maxBackwardPx": 0.8231612704378222,
+      "maxFreezeMs": 298.7999997138977,
+      "firstMotionMs": null
+    },
+    {
+      "kind": "fast",
+      "jitter": true,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 0,
+      "maxBackwardPx": 0,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 32.40000009536743
+    },
+    {
+      "kind": "hold-flick",
+      "jitter": true,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 0,
+      "maxBackwardPx": 0,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 19.199999809265137
+    },
+    {
+      "kind": "stationary",
+      "jitter": true,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 0.8484434784250539,
+      "maxBackwardPx": 0,
+      "maxFreezeMs": 333.1000003814697,
+      "firstMotionMs": null
+    }
+  ],
+  "feedbackRegression": [
+    {
+      "simulatedOneWayDelayMs": 0,
+      "audioInitMs": {
+        "n": 1,
+        "median": 191.40000009536743,
+        "p95": 191.40000009536743
+      },
+      "inputToSend": {
+        "n": 35,
+        "median": 3.1999998092651367,
+        "p95": 34.59999990463257
+      },
+      "touchToSend": {
+        "n": 8,
+        "median": 0.8000001907348633,
+        "p95": 35.90000009536743
+      },
+      "ackRtt": {
+        "n": 15,
+        "median": 219.60000038146973,
+        "p95": 233.59999990463257
+      },
+      "snapshotGap": {
+        "n": 99,
+        "median": 51.80000019073486,
+        "p95": 57.59999990463257
+      },
+      "interpolationMs": {
+        "n": 240,
+        "median": 16.666666666666668,
+        "p95": 50
+      },
+      "pointerCadence": {
+        "n": 11,
+        "median": 16.700000286102295,
+        "p95": 17.09999990463257
+      },
+      "moveSendCadence": {
+        "n": 11,
+        "median": 16.699999809265137,
+        "p95": 17.100000381469727
+      },
+      "firstPaint": {
+        "n": 20,
+        "median": 0.2999997138977051,
+        "p95": 14.5
+      }
+    },
+    {
+      "simulatedOneWayDelayMs": 100,
+      "audioInitMs": {
+        "n": 1,
+        "median": 3.1999998092651367,
+        "p95": 3.1999998092651367
+      },
+      "inputToSend": {
+        "n": 35,
+        "median": 10.099999904632568,
+        "p95": 20.5
+      },
+      "touchToSend": {
+        "n": 8,
+        "median": 0.6999998092651367,
+        "p95": 20.600000381469727
+      },
+      "ackRtt": {
+        "n": 13,
+        "median": 320.90000009536743,
+        "p95": 337
+      },
+      "snapshotGap": {
+        "n": 114,
+        "median": 51.80000019073486,
+        "p95": 57.19999980926514
+      },
+      "interpolationMs": {
+        "n": 240,
+        "median": 16.666666666666668,
+        "p95": 50
+      },
+      "pointerCadence": {
+        "n": 11,
+        "median": 17.199999809265137,
+        "p95": 17.59999990463257
+      },
+      "moveSendCadence": {
+        "n": 11,
+        "median": 17.09999990463257,
+        "p95": 17.699999809265137
+      },
+      "firstPaint": {
+        "n": 20,
+        "median": 0.39999961853027344,
+        "p95": 15
+      }
+    }
+  ]
+}

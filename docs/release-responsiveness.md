@@ -1,5 +1,7 @@
 # Release trajectory fix (local, not deployed)
 
+These measurements describe the `d2ddeda` release-handoff revision before the shared input buffer. See [the subsequent controller-timing revision](controller-timing.md) for current networking behavior and additional validation.
+
 The old client stored a fixed position on pointerup for up to 500 ms. It removed that override after a release acknowledgement and a later snapshot, then immediately rendered the ordinary interpolation pair. The older half of that pair could still describe the drag. The result was a stationary puck followed by a backward step and replay.
 
 The client now uses the same timestamped pointer samples and 620-unit/sec fling cap as the server, continues the released puck visually, and reconciles against the authoritative release position/velocity and tick included in the matching acknowledgement. Only post-release snapshots feed this reconciliation. A temporary local timeline lead drains at 20% of normal time; the final spatial offset decays over 90 ms before returning to the ordinary interpolation path. Ownership and epochs always come from the server. Barrier/wall bounds are respected locally; puck-to-puck collisions remain authoritative, so genuine collision corrections can still be visible.
