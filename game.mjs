@@ -1,5 +1,5 @@
 export const W = 900, H = 420, R = 37;
-export const GRAB_RADIUS = R * .25, CENTER_IMPULSE = 6, CENTER_EDGE_IMPULSE = 12, TAP_TICKS = 12, EDGE_IMPULSE = 140, MAX_FLING = 620, BARRIER_DEPTH = 32;
+export const GRAB_RADIUS = R * .25, CENTER_IMPULSE = 6, CENTER_EDGE_IMPULSE = 6, TAP_TICKS = 12, EDGE_IMPULSE = 140, MAX_FLING = 620, BARRIER_DEPTH = 32;
 export const ATTACKS = {
  lp: {name:'Light punch', damage:5, reach:105, windup:.08, active:.10, recovery:.18, stun:.12, push:10},
  mp: {name:'Medium punch',damage:9,reach:125,windup:.14,active:.12,recovery:.28,stun:.18,push:18},
@@ -11,7 +11,7 @@ export const ATTACKS = {
 export const actions = ['left','right','up','down',...Object.keys(ATTACKS)];
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const cap=(x,y,max)=>{const k=Math.min(1,max/(Math.hypot(x,y)||1));return [x*k,y*k];};
-export const tapImpulse=d=>d<=GRAB_RADIUS?CENTER_IMPULSE+(CENTER_EDGE_IMPULSE-CENTER_IMPULSE)*clamp(d/GRAB_RADIUS,0,1):CENTER_EDGE_IMPULSE+(EDGE_IMPULSE-CENTER_EDGE_IMPULSE)*clamp((d-GRAB_RADIUS)/(R-GRAB_RADIUS),0,1);
+export const tapImpulse=d=>d<=GRAB_RADIUS?CENTER_IMPULSE:CENTER_EDGE_IMPULSE+(EDGE_IMPULSE-CENTER_EDGE_IMPULSE)*clamp((d-GRAB_RADIUS)/(R-GRAB_RADIUS),0,1);
 export class Game {
  constructor({roundSeconds=300}={}){this.roundSeconds=roundSeconds;this.viewports=[null,null];this.layout={width:900,height:420,epoch:0};this.started=false;this.controlEpoch=0;this.round=0;this.tick=0;this.connected=[false,false];this.reset();}
  reset(){
