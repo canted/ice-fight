@@ -6,7 +6,7 @@ export type Input = {seq:number;round:number;eventTime?:number;layoutEpoch?:numb
 export interface Puck {id:string;origin:Player;owner:Player;grabbed?:boolean;epoch:number;action:Action;x:number;y:number;vx:number;vy:number;entry?:{epoch:number;tick:number;x:number;caught?:boolean}}
 
 /** accepted is puck contact/input validity; actionAccepted is separate combat legality. */
-export interface InputAck {type:'ack';inputType:'touch'|'release';seq:number;pointer:number;id?:string;epoch?:number;round:number;controlEpoch:number;layoutEpoch:number;accepted:boolean;grab:boolean;actionAccepted:boolean;practice:boolean;tick:number;inputTick?:number;puck?:Puck;eventTime?:number;effectiveTime?:number;lateMs?:number}
+export interface InputAck {type:'ack';inputType:'touch'|'release';seq:number;pointer:number;id?:string;epoch?:number;round:number;controlEpoch:number;layoutEpoch:number;accepted:boolean;grab:boolean;actionAccepted:boolean;practice:boolean;tick:number;inputTick?:number;puck?:Puck;eventTime?:number;effectiveTime?:number;lateMs?:number;receivedAt?:number;processingMs?:number;attackAge?:number}
 
 export type ClockRequest={type:"clock";clientAt:number};
 export type ClockReply={type:"clock";clientAt:number;serverAt:number}|{type:"clock-reset"};

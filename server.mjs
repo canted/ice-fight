@@ -1,9 +1,9 @@
-import {InputTimeline} from './timeline.mjs';
+import {RealtimeSimulation} from './timeline.mjs';
 import http from 'node:http';import {readFile} from 'node:fs/promises';import {randomBytes} from 'node:crypto';import {WebSocketServer,WebSocket} from 'ws';import QRCode from 'qrcode';import {Game} from './game.mjs';
 const budgets=new Map();function allowed(key,max,ms=60000){const now=Date.now();let b=budgets.get(key);if(!b||now>b.until){b={count:0,until:now+ms};budgets.set(key,b);}return ++b.count<=max;}setInterval(()=>{for(const [k,v] of budgets)if(Date.now()>v.until)budgets.delete(k);},60000);
 const rooms=new Map(),port=Number(process.env.PORT||3000),base=process.env.PUBLIC_URL||`http://localhost:${port}`;
 const token=()=>randomBytes(18).toString('hex');const clean=base.replace(/\/$/,'');
-const server=http.createServer(async(req,res)=>{try{const ip=req.headers['fly-client-ip']||req.socket.remoteAddress;const url=new URL(req.url,clean);if(url.pathname!=='/health'&&!allowed('http:'+ip,600)){res.writeHead(429);return res.end('Please slow down');}if(req.method==='POST'&&url.pathname==='/api/rooms'){if(bytesThisHour>=50*1024*1024||!allowed('create:'+ip,10)||rooms.size>=100){res.writeHead(503);return res.end('Room limit');}const id=randomBytes(3).toString('hex').toUpperCase(),keys=[null,null];rooms.set(id,{game:new Game(),timeline:new InputTimeline(performance.now()),keys,clients:new Set(),slots:[null,null],last:Date.now()});res.setHeader('Content-Type','application/json');return res.end(JSON.stringify({id,lobby:`/room/${id}`,display:`/display/${id}`}));}
+const server=http.createServer(async(req,res)=>{try{const ip=req.headers['fly-client-ip']||req.socket.remoteAddress;const url=new URL(req.url,clean);if(url.pathname!=='/health'&&!allowed('http:'+ip,600)){res.writeHead(429);return res.end('Please slow down');}if(req.method==='POST'&&url.pathname==='/api/rooms'){if(bytesThisHour>=50*1024*1024||!allowed('create:'+ip,10)||rooms.size>=100){res.writeHead(503);return res.end('Room limit');}const id=randomBytes(3).toString('hex').toUpperCase(),keys=[null,null];rooms.set(id,{game:new Game(),timeline:new RealtimeSimulation(performance.now()),keys,clients:new Set(),slots:[null,null],last:Date.now()});res.setHeader('Content-Type','application/json');return res.end(JSON.stringify({id,lobby:`/room/${id}`,display:`/display/${id}`}));}
 const api=url.pathname.match(/^\/api\/rooms\/([A-F0-9]{6})(\/claim)?$/);if(api){const r=rooms.get(api[1]);if(!r){res.writeHead(404);return res.end('Room expired');}res.setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');if(req.method==='POST'&&api[2]){const slot=Number(url.searchParams.get('slot'));if(![0,1].includes(slot)||r.keys[slot]){res.writeHead(409);return res.end(JSON.stringify({error:'Slot already claimed'}));}r.keys[slot]=token();return res.end(JSON.stringify({player:`/play/${api[1]}/${slot}#${r.keys[slot]}`}));}if(req.method==='GET'&&!api[2])return res.end(JSON.stringify({claimed:r.keys.map(Boolean),connected:r.game.connected}));res.writeHead(405);return res.end();}
 if(url.pathname==='/favicon.ico'){res.writeHead(204);return res.end();}
 if(url.pathname==='/health'){res.setHeader('Content-Type','application/json');return res.end('{"ok":true}');}
@@ -17,8 +17,14 @@ setInterval(()=>{for(const ws of wss.clients){if(ws.isAlive===false){ws.terminat
 function applyInput(room,owner,ws,m,timing={}){
  if(room.slots[owner]!==ws||ws.readyState!==WebSocket.OPEN)return;
  const releasedId=m.type==='release'&&room.game.holds[owner].get(String(m.pointer))?.id;
- const accepted=room.game.input(owner,m);
- if(m.type==='touch'||m.type==='release')ws.send(JSON.stringify({type:'ack',inputType:m.type,seq:m.seq,pointer:m.pointer,id:m.id,epoch:m.epoch,round:room.game.round,controlEpoch:room.game.controlEpoch,layoutEpoch:room.game.layout.epoch,accepted,grab:m.type==='touch'&&accepted&&room.game.holds[owner].get(String(m.pointer))?.mode==='grab',actionAccepted:m.type==='touch'&&accepted&&room.game.lastTouch?.actionAccepted===true,practice:m.type==='touch'&&accepted&&room.game.lastTouch?.practice===true,tick:room.game.tick,inputTick:m.tick,puck:releasedId&&accepted?room.game.pucks.find(p=>p.id===releasedId):undefined,...timing}));
+ const accepted=room.game.input(owner,m,timing);
+ if(accepted&&m.type==='touch'&&room.game.lastTouch?.actionAccepted&&room.game.fighters[owner].attack)broadcastState(room,true);
+ const processingMs=timing.receivedAt===undefined?undefined:performance.now()-timing.receivedAt;
+ if(m.type==='touch'||m.type==='release')ws.send(JSON.stringify({type:'ack',inputType:m.type,seq:m.seq,pointer:m.pointer,id:m.id,epoch:m.epoch,round:room.game.round,controlEpoch:room.game.controlEpoch,layoutEpoch:room.game.layout.epoch,accepted,grab:m.type==='touch'&&accepted&&room.game.holds[owner].get(String(m.pointer))?.mode==='grab',actionAccepted:m.type==='touch'&&accepted&&room.game.lastTouch?.actionAccepted===true,practice:m.type==='touch'&&accepted&&room.game.lastTouch?.practice===true,tick:room.game.tick,inputTick:m.tick,puck:releasedId&&accepted?room.game.pucks.find(p=>p.id===releasedId):undefined,...timing,processingMs,attackAge:room.game.lastTouch?.actionAccepted?room.game.fighters[owner].attack?.age:undefined}));
+}
+function broadcastState(r,fightOnly=false){
+ const msg=JSON.stringify({type:fightOnly?'fight':'state',...r.game.snapshot(),timing:{bufferMs:0}});
+ for(const ws of r.clients)if(ws.readyState===WebSocket.OPEN&&(!fightOnly||ws.isDisplay)){if(ws.bufferedAmount>100000)ws.close(1013,'Slow connection');else{bytesThisHour+=Buffer.byteLength(msg);ws.send(msg);}}
 }
 wss.on('connection',(ws,req)=>{
  if(wss.clients.size>200||!allowed('ws:'+(req.headers['fly-client-ip']||req.socket.remoteAddress),30)){ws.close(1013,'Demo connection limit');return;}
@@ -34,32 +40,31 @@ wss.on('connection',(ws,req)=>{
    if(m.role==='player'){
     owner=typeof m.token==='string'&&m.token.length===36?room.keys.indexOf(m.token):-1;
     if(owner<0||room.slots[owner])return ws.close(1008,'Invalid or occupied player slot');
-    room.slots[owner]=ws;room.timeline.clearOwner(owner);room.game.release(owner);room.game.connected[owner]=true;
+    room.slots[owner]=ws;room.game.release(owner);room.game.connected[owner]=true;
    }else if(m.role!=='display')return ws.close();
-   joined=true;room.clients.add(ws);room.last=Date.now();ws.send(JSON.stringify({type:'welcome',owner,clientAt:m.clientAt,serverAt:now}));return;
+   joined=true;ws.isDisplay=m.role==='display';room.clients.add(ws);room.last=Date.now();ws.send(JSON.stringify({type:'welcome',owner,clientAt:m.clientAt,serverAt:now}));return;
   }
   if(m.type==='clock'){if(Number.isFinite(m.clientAt))ws.send(JSON.stringify({type:'clock',clientAt:m.clientAt,serverAt:now}));return;}
   if(owner<0)return;if(!Number.isSafeInteger(m.seq)||m.seq<=seq)return;seq=m.seq;
-  // Viewport/connection/round boundaries cancel pending inputs, independently of gameplay time.
+  // Viewport/connection/round boundaries invalidate old controls.
   if(m.type==='viewport'){applyInput(room,owner,ws,m);return;}
-  if(m.type==='rematch'){if(m.round===room.game.round&&room.game.result){room.timeline.queue=[];room.game.reset();}return;}
+  if(m.type==='rematch'){if(m.round===room.game.round&&room.game.result){room.game.reset();}return;}
   if(!['touch','move','release'].includes(m.type))return;
   const authored=m.eventTime??now;
-  if(!Number.isFinite(authored)||authored<now-2000||authored>now+250){room.timeline.clearOwner(owner);room.game.release(owner);lastEventTime=-Infinity;ws.send(JSON.stringify({type:'clock-reset'}));return;}
+  if(!Number.isFinite(authored)||authored<now-2000||authored>now+250){room.game.release(owner);lastEventTime=-Infinity;ws.send(JSON.stringify({type:'clock-reset'}));return;}
   // Preserve each controller's sequence when tiny clock-estimate updates overlap adjacent events.
   const eventTime=Math.max(lastEventTime,authored);lastEventTime=eventTime;
-  room.timeline.enqueue(owner,eventTime,now,timing=>applyInput(room,owner,ws,m,timing));
+  applyInput(room,owner,ws,m,{eventTime,receivedAt:now,effectiveTime:now,lateMs:Math.max(0,now-eventTime)});
  }catch{ws.close(1008,'Invalid input');}});
  const limit=setInterval(()=>count=0,1000);
- ws.on('close',()=>{clearInterval(limit);clearTimeout(joinDeadline);if(!joined)return;room.clients.delete(ws);if(owner>=0&&room.slots[owner]===ws){room.slots[owner]=null;room.timeline.clearOwner(owner);room.game.connected[owner]=false;room.game.release(owner);}});
+ ws.on('close',()=>{clearInterval(limit);clearTimeout(joinDeadline);if(!joined)return;room.clients.delete(ws);if(owner>=0&&room.slots[owner]===ws){room.slots[owner]=null;room.game.connected[owner]=false;room.game.release(owner);}});
 });
 let bytesThisHour=0,hourStart=Date.now();
 setInterval(()=>{for(const [id,r]of rooms){
  if(!r.clients.size&&Date.now()-r.last>3600000){rooms.delete(id);continue;}
  if(Date.now()-hourStart>3600000){bytesThisHour=0;hourStart=Date.now();}
  r.timeline.advance(performance.now(),()=>{r.game.step();if(r.game.tick%3!==0)return;
-  const msg=JSON.stringify({type:'state',...r.game.snapshot(),timing:{bufferMs:r.timeline.bufferMs,lateInputs:r.timeline.lateInputs}});
-  for(const ws of r.clients)if(ws.readyState===WebSocket.OPEN){if(ws.bufferedAmount>100000)ws.close(1013,'Slow connection');else{bytesThisHour+=Buffer.byteLength(msg);ws.send(msg);}}
+  broadcastState(r);
  });
 }},1000/60);
 server.listen(port,'0.0.0.0',()=>console.log(`Ice Fight: ${clean}`));

@@ -16,7 +16,7 @@ export const tapImpulse=d=>d<=TAP_RADIUS?CENTER_IMPULSE:CENTER_EDGE_IMPULSE+(EDG
 export class Game {
  constructor({roundSeconds=300}={}){this.roundSeconds=roundSeconds;this.viewports=[null,null];this.layout={width:900,height:420,epoch:0};this.started=false;this.controlEpoch=0;this.round=0;this.tick=0;this.connected=[false,false];this.reset();}
  reset(){
-  this.round++;this.time=this.roundSeconds;this.result=null;this.holds=[new Map(),new Map()];this.pressed=[new Set(),new Set()];
+  this.attackReadyAt=[-Infinity,-Infinity];this.round++;this.time=this.roundSeconds;this.result=null;this.holds=[new Map(),new Map()];this.pressed=[new Set(),new Set()];
   this.fighters=[0,1].map(i=>({x:i?625:275,y:0,vy:0,hp:100,facing:i?-1:1,attack:null,cool:Object.fromEntries(Object.keys(ATTACKS).map(k=>[k,0])),stun:0}));
   this.pucks=[0,1].flatMap(owner=>actions.map((action,i)=>({id:`${owner}-${i}`,origin:owner,owner,epoch:0,action,x:90+(i%5)*180,y:120+Math.floor(i/5)*190,vx:(i%2?1:-1)*16,vy:8})));this.history=[];
  }
@@ -37,7 +37,7 @@ export class Game {
   if(fling&&h?.mode==='grab'&&!h.dragged&&this.tick-h.touchTick<=TAP_TICKS&&p&&p.owner===owner&&p.epoch===h.epoch){p.vx=h.tapVX;p.vy=h.tapVY;}
   this.holds[owner].delete(key);if(!keepPressed)this.pressed[owner].delete(key);
  }
- input(owner,m){
+ input(owner,m,timing={}){
   if(m.type==='touch')this.lastTouch=null;
   if(m.type==='viewport')return this.setViewport(owner,m.width,m.height);
   const key=String(m.pointer);
@@ -71,7 +71,14 @@ export class Game {
   const f=this.fighters[owner],attack=ATTACKS[p.action];
   if(p.action==='up'&&f.y===0&&f.stun<=0&&!f.attack){f.vy=440;this.lastTouch.actionAccepted=true;}
   if(['left','right','down'].includes(p.action)&&f.stun<=0&&!f.attack&&(p.action!=='down'||f.y===0))this.lastTouch.actionAccepted=true;
-  if(attack&&f.stun<=0&&!f.attack&&f.cool[p.action]<=0){this.lastTouch.actionAccepted=true;f.attack={kind:p.action,age:0,hit:false,duration:attack.windup+attack.active+attack.recovery};f.cool[p.action]=f.attack.duration;}
+  const authored=timing.eventTime,dated=Number.isFinite(authored),eventStart=dated&&Number.isFinite(timing.effectiveTime)?Math.min(authored,timing.effectiveTime):authored;
+  if(attack&&f.stun<=0&&!f.attack&&f.cool[p.action]<=0&&(!dated||eventStart>=this.attackReadyAt[owner])){
+   // Credit elapsed network time against windup, but never skip the only active hit window.
+   // Hits use current fighter positions on the next step; no historical damage is invented.
+   const age=Math.min(attack.windup,Math.max(0,(timing.effectiveTime-authored)/1000)||0),duration=attack.windup+attack.active+attack.recovery;
+   this.lastTouch.actionAccepted=true;f.attack={kind:p.action,age,hit:false,duration};f.cool[p.action]=duration-age;
+   if(dated)this.attackReadyAt[owner]=eventStart+duration*1000;
+  }
   return true;
  }
  transfer(p){

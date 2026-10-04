@@ -1,6 +1,6 @@
 # Release trajectory fix (local, not deployed)
 
-These measurements describe the `d2ddeda` release-handoff revision before the shared input buffer. See [the subsequent controller-timing revision](controller-timing.md) for current networking behavior and additional validation.
+These measurements describe the `d2ddeda` release-handoff revision before subsequent networking revisions. See [the subsequent controller-timing revision](controller-timing.md) for current networking behavior and additional validation.
 
 The old client stored a fixed position on pointerup for up to 500 ms. It removed that override after a release acknowledgement and a later snapshot, then immediately rendered the ordinary interpolation pair. The older half of that pair could still describe the drag. The result was a stationary puck followed by a backward step and replay.
 

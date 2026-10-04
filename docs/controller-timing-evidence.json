@@ -1,33 +1,38 @@
 {
+  "policy": "Immediate receipt-time processing; synchronized event time credits attack windup; no input buffer or historical combat rewind.",
   "timestampOrdering": {
-    "bufferMs": 200,
+    "bufferMs": 0,
     "controllers": [
       {
         "player": 0,
         "oneWayDelayMs": 160,
         "clockOrigin": 50000,
-        "clockRttMs": 321.3894170000058,
-        "eventTime": 256741.70349949997,
-        "effectiveTime": 256749.0642916663,
-        "lateMs": 0
+        "clockRttMs": 320.1001250000045,
+        "eventTime": 4396.595644500005,
+        "effectiveTime": 4558.569,
+        "lateMs": 161.9733554999957,
+        "receiptToProcessingMs": 0.8097499999994398,
+        "initialAttackAge": 0.1619733554999957
       },
       {
         "player": 1,
         "oneWayDelayMs": 20,
         "clockOrigin": -900000,
-        "clockRttMs": 42.87395799998194,
-        "eventTime": 256790.708646,
-        "effectiveTime": 256799.06429166626,
-        "lateMs": 0
+        "clockRttMs": 44.75087500002701,
+        "eventTime": 4446.376770499861,
+        "effectiveTime": 4467.579708,
+        "lateMs": 21.202937500139342,
+        "receiptToProcessingMs": 0.6532919999999649,
+        "initialAttackAge": 0.02120293750013934
       }
     ],
-    "authoredGapMs": 49.00514650004334,
-    "appliedGapMs": 49.999999999970896,
+    "authoredGapMs": 49.78112599985616,
+    "appliedGapMs": -90.9892920000002,
     "lateEvent": {
-      "lateMs": 584.021500165516,
-      "effectiveTime": 258115.73095833216
+      "lateMs": 812.3257294999894,
+      "effectiveTime": 5867.445291
     },
-    "identicalMirrorSnapshots": 44
+    "identicalMirrorSnapshots": 43
   },
   "entryBefore": {
     "baseline": true,
@@ -54,17 +59,17 @@
     "simulatedOneWayDelayMs": 100,
     "orderedJitter": true,
     "firstRendered": {
-      "x": 545.6591125116931,
+      "x": 543.9317325745052,
       "y": 0
     },
     "firstDeliveredAuthority": {
-      "x": 545.6591125116931,
-      "y": 38.0058500766914,
-      "tick": 171,
+      "x": 543.9317325745052,
+      "y": 69.21550564802968,
+      "tick": 159,
       "entry": {
         "epoch": 1,
-        "tick": 168,
-        "x": 545.6591125116931
+        "tick": 153,
+        "x": 543.9317325745052
       }
     },
     "id": "0-6"
@@ -77,7 +82,7 @@
       "maxBackwardThroughHandoffPx": 0,
       "maxBackwardPx": 0,
       "maxFreezeMs": 0,
-      "firstMotionMs": 16.200000286102295
+      "firstMotionMs": 17.09999990463257
     },
     {
       "kind": "hold-flick",
@@ -86,15 +91,15 @@
       "maxBackwardThroughHandoffPx": 0,
       "maxBackwardPx": 0,
       "maxFreezeMs": 0,
-      "firstMotionMs": 30.199999809265137
+      "firstMotionMs": 28.59999990463257
     },
     {
       "kind": "stationary",
       "jitter": false,
       "simulatedOneWayDelayMs": 100,
-      "maxBackwardThroughHandoffPx": 0.8231612704378222,
-      "maxBackwardPx": 0.8231612704378222,
-      "maxFreezeMs": 298.7999997138977,
+      "maxBackwardThroughHandoffPx": 0.5842719843213899,
+      "maxBackwardPx": 0.5842719843213899,
+      "maxFreezeMs": 183.59999990463257,
       "firstMotionMs": null
     },
     {
@@ -104,7 +109,7 @@
       "maxBackwardThroughHandoffPx": 0,
       "maxBackwardPx": 0,
       "maxFreezeMs": 0,
-      "firstMotionMs": 32.40000009536743
+      "firstMotionMs": 31.5
     },
     {
       "kind": "hold-flick",
@@ -113,15 +118,15 @@
       "maxBackwardThroughHandoffPx": 0,
       "maxBackwardPx": 0,
       "maxFreezeMs": 0,
-      "firstMotionMs": 19.199999809265137
+      "firstMotionMs": 30.700000286102295
     },
     {
       "kind": "stationary",
       "jitter": true,
       "simulatedOneWayDelayMs": 100,
-      "maxBackwardThroughHandoffPx": 0.8484434784250539,
-      "maxBackwardPx": 0,
-      "maxFreezeMs": 333.1000003814697,
+      "maxBackwardThroughHandoffPx": 0.5865274467605559,
+      "maxBackwardPx": 0.5865274467605559,
+      "maxFreezeMs": 231.7000002861023,
       "firstMotionMs": null
     }
   ],
@@ -130,76 +135,76 @@
       "simulatedOneWayDelayMs": 0,
       "audioInitMs": {
         "n": 1,
-        "median": 191.40000009536743,
-        "p95": 191.40000009536743
+        "median": 172.69999980926514,
+        "p95": 172.69999980926514
       },
       "inputToSend": {
         "n": 35,
-        "median": 3.1999998092651367,
-        "p95": 34.59999990463257
+        "median": 2,
+        "p95": 32.799999713897705
       },
       "touchToSend": {
         "n": 8,
-        "median": 0.8000001907348633,
-        "p95": 35.90000009536743
+        "median": 0.40000009536743164,
+        "p95": 33.39999961853027
       },
       "ackRtt": {
         "n": 15,
-        "median": 219.60000038146973,
-        "p95": 233.59999990463257
+        "median": 14.300000190734863,
+        "p95": 19.90000009536743
       },
       "snapshotGap": {
-        "n": 99,
-        "median": 51.80000019073486,
-        "p95": 57.59999990463257
+        "n": 58,
+        "median": 52.39999961853027,
+        "p95": 56.700000286102295
       },
       "interpolationMs": {
-        "n": 240,
+        "n": 171,
         "median": 16.666666666666668,
         "p95": 50
       },
       "pointerCadence": {
-        "n": 11,
-        "median": 16.700000286102295,
-        "p95": 17.09999990463257
+        "n": 12,
+        "median": 17,
+        "p95": 83.69999980926514
       },
       "moveSendCadence": {
-        "n": 11,
-        "median": 16.699999809265137,
-        "p95": 17.100000381469727
+        "n": 12,
+        "median": 17,
+        "p95": 83.69999980926514
       },
       "firstPaint": {
         "n": 20,
-        "median": 0.2999997138977051,
-        "p95": 14.5
+        "median": 0.19999980926513672,
+        "p95": 16.5
       }
     },
     {
       "simulatedOneWayDelayMs": 100,
       "audioInitMs": {
         "n": 1,
-        "median": 3.1999998092651367,
-        "p95": 3.1999998092651367
+        "median": 2.5999999046325684,
+        "p95": 2.5999999046325684
       },
       "inputToSend": {
         "n": 35,
-        "median": 10.099999904632568,
-        "p95": 20.5
+        "median": 1.8000001907348633,
+        "p95": 25.100000381469727
       },
       "touchToSend": {
         "n": 8,
-        "median": 0.6999998092651367,
-        "p95": 20.600000381469727
+        "median": 0.5,
+        "p95": 25
       },
       "ackRtt": {
         "n": 13,
-        "median": 320.90000009536743,
-        "p95": 337
+        "median": 206.80000019073486,
+        "p95": 210.90000009536743
       },
       "snapshotGap": {
-        "n": 114,
-        "median": 51.80000019073486,
-        "p95": 57.19999980926514
+        "n": 91,
+        "median": 51.59999990463257,
+        "p95": 64.90000009536743
       },
       "interpolationMs": {
         "n": 240,
@@ -208,18 +213,18 @@
       },
       "pointerCadence": {
         "n": 11,
-        "median": 17.199999809265137,
-        "p95": 17.59999990463257
+        "median": 16.59999990463257,
+        "p95": 18
       },
       "moveSendCadence": {
         "n": 11,
-        "median": 17.09999990463257,
-        "p95": 17.699999809265137
+        "median": 16.5,
+        "p95": 18
       },
       "firstPaint": {
         "n": 20,
-        "median": 0.39999961853027344,
-        "p95": 15
+        "median": 0.20000028610229492,
+        "p95": 16.799999713897705
       }
     }
   ]
