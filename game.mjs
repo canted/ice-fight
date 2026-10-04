@@ -1,5 +1,5 @@
 export const W = 900, H = 420, R = 37;
-export const GRAB_RADIUS = R * .62, EDGE_IMPULSE = 140, MAX_FLING = 620, BARRIER_DEPTH = 32;
+export const GRAB_RADIUS = R * .25, CENTER_IMPULSE = 6, CENTER_EDGE_IMPULSE = 12, TAP_TICKS = 12, EDGE_IMPULSE = 140, MAX_FLING = 620, BARRIER_DEPTH = 32;
 export const ATTACKS = {
  lp: {name:'Light punch', damage:5, reach:105, windup:.08, active:.10, recovery:.18, stun:.12, push:10},
  mp: {name:'Medium punch',damage:9,reach:125,windup:.14,active:.12,recovery:.28,stun:.18,push:18},
@@ -11,6 +11,7 @@ export const ATTACKS = {
 export const actions = ['left','right','up','down',...Object.keys(ATTACKS)];
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const cap=(x,y,max)=>{const k=Math.min(1,max/(Math.hypot(x,y)||1));return [x*k,y*k];};
+export const tapImpulse=d=>d<=GRAB_RADIUS?CENTER_IMPULSE+(CENTER_EDGE_IMPULSE-CENTER_IMPULSE)*clamp(d/GRAB_RADIUS,0,1):CENTER_EDGE_IMPULSE+(EDGE_IMPULSE-CENTER_EDGE_IMPULSE)*clamp((d-GRAB_RADIUS)/(R-GRAB_RADIUS),0,1);
 export class Game {
  constructor({roundSeconds=300}={}){this.roundSeconds=roundSeconds;this.viewports=[null,null];this.layout={width:900,height:420,epoch:0};this.started=false;this.controlEpoch=0;this.round=0;this.tick=0;this.connected=[false,false];this.reset();}
  reset(){
@@ -28,11 +29,12 @@ export class Game {
  release(owner,pointer,fling=false,keepPressed=false,at){
   if(pointer===undefined){for(const key of [...this.holds[owner].keys()])this.release(owner,key);this.pressed[owner].clear();return;}
   const key=String(pointer),h=this.holds[owner].get(key),p=h&&this.pucks.find(p=>p.id===h.id);
-  if(h?.mode==='grab'&&p&&p.owner===owner&&p.epoch===h.epoch){p.vx=p.vy=0;if(fling&&h.samples.length>1){const latest=h.samples.at(-1),first=h.samples.find(s=>s.tick>=this.tick-5)||latest;const dt=(this.tick-first.tick)/60;if(dt>0&&this.tick-latest.tick<=5){[p.vx,p.vy]=cap((p.x-first.x)/dt,(p.y-first.y)/dt,MAX_FLING);if(Math.hypot(p.vx,p.vy)<45)p.vx=p.vy=0;}}}
-  if(fling&&h?.mode==='grab'&&p&&p.owner===owner&&Number.isFinite(at)&&h.moves.length>1){
+  if(h?.mode==='grab'&&p&&p.owner===owner&&p.epoch===h.epoch){p.vx=p.vy=0;if(fling&&h.dragged&&h.samples.length>1){const latest=h.samples.at(-1),first=h.samples.find(s=>s.tick>=this.tick-5)||latest;const dt=(this.tick-first.tick)/60;if(dt>0&&this.tick-latest.tick<=5){[p.vx,p.vy]=cap((p.x-first.x)/dt,(p.y-first.y)/dt,MAX_FLING);if(Math.hypot(p.vx,p.vy)<45)p.vx=p.vy=0;}}}
+  if(fling&&h?.dragged&&h?.mode==='grab'&&p&&p.owner===owner&&Number.isFinite(at)&&h.moves.length>1){
    const last=h.moves.at(-1),first=h.moves.find(s=>s.at>=last.at-100)||last;
    if(at>=last.at&&at-last.at<=120&&last.at>first.at){const dt=Math.max(8,last.at-first.at)/1000;[p.vx,p.vy]=cap((last.x-first.x)/dt,(last.y-first.y)/dt,MAX_FLING);if(Math.hypot(last.x-first.x,last.y-first.y)<8)p.vx=p.vy=0;}else p.vx=p.vy=0;
   }
+  if(fling&&h?.mode==='grab'&&!h.dragged&&this.tick-h.touchTick<=TAP_TICKS&&p&&p.owner===owner&&p.epoch===h.epoch){p.vx=h.tapVX;p.vy=h.tapVY;}
   this.holds[owner].delete(key);if(!keepPressed)this.pressed[owner].delete(key);
  }
  input(owner,m){
@@ -45,7 +47,9 @@ export class Game {
   const p=this.pucks.find(p=>p.id===m.id);if(!p||p.owner!==owner||p.epoch!==m.epoch)return false;
   if(m.type==='move'){
    const h=this.holds[owner].get(key);if(!h||h.mode!=='grab'||h.id!==p.id||h.epoch!==p.epoch)return false;
-   h.targetX=clamp(m.x+h.offsetX,R,W-R);h.targetY=clamp(m.y+h.offsetY,this.started?-R:R+BARRIER_DEPTH,H-R);
+   const dx=m.x-h.touchX,dy=m.y-h.touchY;
+   if(!h.dragged&&Math.hypot(dx,dy)<=6)return true;
+   h.dragged=true;h.targetX=clamp(h.anchorX+dx,R,W-R);h.targetY=clamp(h.anchorY+dy,this.started?-R:R+BARRIER_DEPTH,H-R);
    if(Number.isFinite(m.at)&&(!h.moves.length||m.at>h.moves.at(-1).at)){const last=h.moves.at(-1);if(last&&m.at-last.at>100)h.moves.push({at:m.at-16,x:last.x,y:last.y});h.moves.push({at:m.at,x:h.targetX,y:h.targetY});h.moves=h.moves.filter(s=>s.at>=m.at-150).slice(-12);}return true;
   }
   if(m.type!=='touch'||this.pressed[owner].has(key)||[...this.holds[owner].values()].some(h=>h.id===p.id))return false;
@@ -53,9 +57,9 @@ export class Game {
   if(!old||old.owner!==owner||old.epoch!==p.epoch)return false;
   const dx=old.x-m.x,dy=old.y-m.y,d=Math.hypot(dx,dy);if(d>R+8)return false;
   const mode=d<=GRAB_RADIUS?'grab':'edge';
-  const h={id:p.id,action:p.action,epoch:p.epoch,mode,offsetX:dx,offsetY:dy,targetX:p.x,targetY:p.y,samples:[{tick:this.tick,x:p.x,y:p.y}],moves:Number.isFinite(m.at)?[{at:m.at,x:p.x,y:p.y}]:[]};
+  const h={id:p.id,action:p.action,epoch:p.epoch,mode,touchTick:this.tick,tapVX:(d>1e-6?dx/d:0)*tapImpulse(d),tapVY:(d>1e-6?dy/d:-1)*tapImpulse(d),touchX:m.x,touchY:m.y,anchorX:p.x,anchorY:p.y,dragged:false,targetX:p.x,targetY:p.y,samples:[{tick:this.tick,x:p.x,y:p.y}],moves:Number.isFinite(m.at)?[{at:m.at,x:p.x,y:p.y}]:[]};
   this.pressed[owner].add(key);this.holds[owner].set(key,h);
-  if(mode==='grab'){p.vx=p.vy=0;}else{const strength=clamp((d-GRAB_RADIUS)/(R-GRAB_RADIUS),0,1)*EDGE_IMPULSE;[p.vx,p.vy]=cap(p.vx+dx/d*strength,p.vy+dy/d*strength,320);}
+  if(mode==='grab'){p.vx=p.vy=0;}else{const strength=tapImpulse(d);[p.vx,p.vy]=cap(p.vx+dx/d*strength,p.vy+dy/d*strength,320);}
   if(!this.started)return true;
   const f=this.fighters[owner],attack=ATTACKS[p.action];
   if(p.action==='up'&&f.y===0&&f.stun<=0&&!f.attack)f.vy=440;
