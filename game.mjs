@@ -1,5 +1,5 @@
 export const W = 900, H = 420, R = 37;
-export const GRAB_RADIUS = R * .25, CENTER_IMPULSE = 6, CENTER_EDGE_IMPULSE = 6, TAP_TICKS = 12, EDGE_IMPULSE = 140, MAX_FLING = 620, BARRIER_DEPTH = 32;
+export const GRAB_RADIUS = R * .72, TAP_RADIUS = R * .25, CENTER_IMPULSE = 6, CENTER_EDGE_IMPULSE = 6, TAP_TICKS = 12, EDGE_IMPULSE = 140, MAX_FLING = 620, BARRIER_DEPTH = 32;
 export const ATTACKS = {
  lp: {name:'Light punch', damage:5, reach:105, windup:.08, active:.10, recovery:.18, stun:.12, push:10},
  mp: {name:'Medium punch',damage:9,reach:125,windup:.14,active:.12,recovery:.28,stun:.18,push:18},
@@ -11,7 +11,7 @@ export const ATTACKS = {
 export const actions = ['left','right','up','down',...Object.keys(ATTACKS)];
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const cap=(x,y,max)=>{const k=Math.min(1,max/(Math.hypot(x,y)||1));return [x*k,y*k];};
-export const tapImpulse=d=>d<=GRAB_RADIUS?CENTER_IMPULSE:CENTER_EDGE_IMPULSE+(EDGE_IMPULSE-CENTER_EDGE_IMPULSE)*clamp((d-GRAB_RADIUS)/(R-GRAB_RADIUS),0,1);
+export const tapImpulse=d=>d<=TAP_RADIUS?CENTER_IMPULSE:CENTER_EDGE_IMPULSE+(EDGE_IMPULSE-CENTER_EDGE_IMPULSE)*clamp((d-TAP_RADIUS)/(R-TAP_RADIUS),0,1);
 export class Game {
  constructor({roundSeconds=300}={}){this.roundSeconds=roundSeconds;this.viewports=[null,null];this.layout={width:900,height:420,epoch:0};this.started=false;this.controlEpoch=0;this.round=0;this.tick=0;this.connected=[false,false];this.reset();}
  reset(){
@@ -38,6 +38,7 @@ export class Game {
   this.holds[owner].delete(key);if(!keepPressed)this.pressed[owner].delete(key);
  }
  input(owner,m){
+  if(m.type==='touch')this.lastTouch=null;
   if(m.type==='viewport')return this.setViewport(owner,m.width,m.height);
   const key=String(m.pointer);
   if(m.controlEpoch!==undefined&&m.controlEpoch!==this.controlEpoch)return false;
@@ -60,10 +61,12 @@ export class Game {
   const h={id:p.id,action:p.action,epoch:p.epoch,mode,touchTick:this.tick,tapVX:(d>1e-6?dx/d:0)*tapImpulse(d),tapVY:(d>1e-6?dy/d:-1)*tapImpulse(d),touchX:m.x,touchY:m.y,anchorX:p.x,anchorY:p.y,dragged:false,targetX:p.x,targetY:p.y,samples:[{tick:this.tick,x:p.x,y:p.y}],moves:Number.isFinite(m.at)?[{at:m.at,x:p.x,y:p.y}]:[]};
   this.pressed[owner].add(key);this.holds[owner].set(key,h);
   if(mode==='grab'){p.vx=p.vy=0;}else{const strength=tapImpulse(d);[p.vx,p.vy]=cap(p.vx+dx/d*strength,p.vy+dy/d*strength,320);}
+  this.lastTouch={actionAccepted:false,practice:!this.started};
   if(!this.started)return true;
   const f=this.fighters[owner],attack=ATTACKS[p.action];
-  if(p.action==='up'&&f.y===0&&f.stun<=0&&!f.attack)f.vy=440;
-  if(attack&&f.stun<=0&&!f.attack&&f.cool[p.action]<=0){f.attack={kind:p.action,age:0,hit:false,duration:attack.windup+attack.active+attack.recovery};f.cool[p.action]=f.attack.duration;}
+  if(p.action==='up'&&f.y===0&&f.stun<=0&&!f.attack){f.vy=440;this.lastTouch.actionAccepted=true;}
+  if(['left','right','down'].includes(p.action)&&f.stun<=0&&!f.attack&&(p.action!=='down'||f.y===0))this.lastTouch.actionAccepted=true;
+  if(attack&&f.stun<=0&&!f.attack&&f.cool[p.action]<=0){this.lastTouch.actionAccepted=true;f.attack={kind:p.action,age:0,hit:false,duration:attack.windup+attack.active+attack.recovery};f.cool[p.action]=f.attack.duration;}
   return true;
  }
  transfer(p){
