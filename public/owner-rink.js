@@ -1,4 +1,4 @@
-import {recordMove,flingVelocity,MAX_DRAG,MAX_PUCK_SPEED} from './puck-motion.js';
+import {recordMove,flingVelocity,glide,MAX_DRAG,MAX_PUCK_SPEED} from './puck-motion.js';
 const R=37,W=900,H=420,clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const cap=(x,y,max)=>{const k=Math.min(1,max/(Math.hypot(x,y)||1));return {vx:x*k,vy:y*k};};
 // One controller owns this entire half's motion. Checkpoints never reconcile live local pucks.
@@ -42,7 +42,7 @@ export class OwnerRink {
  }
  advanceSlice(dt){
   const ps=[...this.pucks.values()],before=new Map(ps.map(p=>[p.id,{x:p.x,y:p.y}]));
-  for(const p of ps){if(p.fresh)continue;const h=[...this.holds.values()].find(h=>h.id===p.id&&h.grab);if(h){const v=cap(h.x-p.x,h.y-p.y,MAX_DRAG*dt);p.x+=v.vx;p.y+=v.vy;p.vx=p.vy=0;}else{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.exp(-.32*dt);p.vy*=Math.exp(-.32*dt);}this.bound(p);}
+  for(const p of ps){if(p.fresh)continue;const h=[...this.holds.values()].find(h=>h.id===p.id&&h.grab);if(h){const v=cap(h.x-p.x,h.y-p.y,MAX_DRAG*dt);p.x+=v.vx;p.y+=v.vy;p.vx=p.vy=0;}else{glide(p,dt);}this.bound(p);}
   for(let iteration=0;iteration<3;iteration++){
    for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++){
     const a=ps[i],b=ps[j];if(a.fresh||b.fresh)continue;let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
@@ -58,7 +58,7 @@ export class OwnerRink {
    for(const p of ps)if(!p.fresh){Object.assign(p,cap(p.vx,p.vy,MAX_PUCK_SPEED));this.bound(p);}
   }
   for(const p of ps){if(p.fresh)continue;if(!this.waiting&&p.y<0){
-   const h=[...this.holds.values()].find(h=>h.id===p.id&&h.grab);if(h?.dragged)Object.assign(p,flingVelocity(h.moves,h.moves.at(-1).at)||{vx:0,vy:-60});p.vy=Math.min(-6,p.vy);Object.assign(p,cap(p.vx,p.vy,MAX_PUCK_SPEED));
+   const h=[...this.holds.values()].find(h=>h.id===p.id&&h.grab);if(h?.dragged)Object.assign(p,flingVelocity(h.moves,h.moves.at(-1).at)||{vx:0,vy:-60});p.vy=Math.min(0,p.vy);Object.assign(p,cap(p.vx,p.vy,MAX_PUCK_SPEED));
    const previous=before.get(p.id),fraction=previous.y>0?previous.y/(previous.y-p.y):0;p.x=clamp(previous.x+(p.x-previous.x)*fraction,R,W-R);p.y=0;
    this.pucks.delete(p.id);this.removeHolds(p.id);this.departing.set(p.id,{...p,grabbed:false});this.onTransfer({...p});
   }}

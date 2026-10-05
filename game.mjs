@@ -1,4 +1,4 @@
-import {recordMove,flingVelocity,MAX_DRAG,MAX_FLING,MAX_PUCK_SPEED} from './public/puck-motion.js';
+import {recordMove,flingVelocity,glide,MAX_DRAG,MAX_FLING,MAX_PUCK_SPEED} from './public/puck-motion.js';
 export {MAX_FLING};
 export const W = 900, H = 420, R = 37, HISTORY_TICKS = 120;
 export const GRAB_RADIUS = R * .72, TAP_RADIUS = R * .25, CENTER_IMPULSE = 6, CENTER_EDGE_IMPULSE = 6, TAP_TICKS = 12, EDGE_IMPULSE = 140, BARRIER_DEPTH = 32;
@@ -130,7 +130,7 @@ export class Game {
     if(!this.started&&!this.connected[p.owner])continue;
     const h=this.grabFor(p);
     if(h){const [dx,dy]=cap(h.targetX-p.x,h.targetY-p.y,MAX_DRAG*slice);p.x+=dx;p.y+=dy;p.vx=p.vy=0;h.samples.push({tick:this.tick,x:p.x,y:p.y});h.samples=h.samples.filter(s=>s.tick>=this.tick-6);}
-    else{p.x+=p.vx*slice;p.y+=p.vy*slice;p.vx*=Math.exp(-.32*slice);p.vy*=Math.exp(-.32*slice);}
+    else{glide(p,slice);}
     if(p.x<R){p.x=R;p.vx=Math.abs(p.vx)*.95;}if(p.x>W-R){p.x=W-R;p.vx=-Math.abs(p.vx)*.95;}if(p.y>H-R){p.y=H-R;p.vy=-Math.abs(p.vy)*.95;}
     this.transfer(p);
    }

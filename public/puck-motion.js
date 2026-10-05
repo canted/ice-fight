@@ -1,4 +1,12 @@
 export const MAX_DRAG=12000, MAX_FLING=6200, MAX_PUCK_SPEED=24000;
+// Same high-speed glide; a continuous extra drag below 60 brings slow pucks gently to rest.
+export function glide(p,seconds){
+ const speed=Math.hypot(p.vx,p.vy);if(speed===0||seconds<=0)return;
+ const drag=.32,threshold=60,settling=6,k=drag-settling/threshold;let v=speed,t=seconds,distance=0;
+ if(v>threshold){const high=Math.min(t,Math.log(v/threshold)/drag),next=v*Math.exp(-drag*high);distance+=(v-next)/drag;v=next;t-=high;}
+ if(t>0){const stop=Math.log1p(v*k/settling)/k,low=Math.min(t,stop),decay=Math.exp(-k*low);distance+=(v+settling/k)*(-Math.expm1(-k*low))/k-settling/k*low;v=t>=stop?0:Math.max(0,(v+settling/k)*decay-settling/k);}
+ p.x+=p.vx/speed*distance;p.y+=p.vy/speed*distance;p.vx*=v/speed;p.vy*=v/speed;
+}
 // Shared pointer sample rules. These are the server's existing fling rules, not a new force model.
 export function recordMove(moves, at, x, y) {
  if(!Number.isFinite(at)||(moves.length&&at<=moves.at(-1).at))return moves;
@@ -15,7 +23,7 @@ export function flingVelocity(moves, at) {
 // Visual only: server snapshots still decide collisions and ownership. Never invent a seam transfer.
 export function advance(p, seconds, waiting) {
  const out={...p};let remaining=Math.max(0,Math.min(seconds,.5));
- while(remaining>1e-8){const dt=Math.min(1/60,remaining);remaining-=dt;out.x+=out.vx*dt;out.y+=out.vy*dt;out.vx*=Math.exp(-.32*dt);out.vy*=Math.exp(-.32*dt);
+ while(remaining>1e-8){const dt=Math.min(1/60,remaining);remaining-=dt;glide(out,dt);
   if(out.x<37){out.x=37;out.vx=Math.abs(out.vx)*.95;}if(out.x>863){out.x=863;out.vx=-Math.abs(out.vx)*.95;}
   if(out.y>383){out.y=383;out.vy=-Math.abs(out.vy)*.95;}if(waiting&&out.y<69){out.y=69;out.vy=Math.abs(out.vy)*.95;}
  }return out;
