@@ -8,7 +8,7 @@ async function request(url, options = {}) {
 function messageFor(response, action) {
   if (response.status === 404) return 'That rink has closed or could not be found. Check the code or create a new rink.';
   if (response.status === 429) return 'Too many requests. Wait a moment, then try again.';
-  if (response.status === 503) return 'No room for a new rink right now. Try again in a moment.';
+  if (response.status === 503) return 'No space for a new rink right now. Try again in a moment.';
   if (response.status === 409) return 'That player was just claimed. Choose the other player or watch the fight.';
   return `Could not ${action}. Try again in a moment.`;
 }
@@ -30,13 +30,12 @@ export function renderHomepage(app) {
       <p id="createstatus" class="feedback" role="status" aria-live="polite" aria-atomic="true"></p>
     </div><img src="/banner-800.webp" srcset="/banner-400.webp 400w, /banner-800.webp 800w, /banner-1200.webp 1200w" sizes="(max-width: 700px) calc(100vw - 78px), (max-width: 1160px) calc((100vw - 114px) / 2), 523px" width="1200" height="630" fetchpriority="high" alt="Ice Fight arcade banner with blue and red hockey fighters facing off"></div>
     <div class="steps"><div><strong>01 / Bring two phones</strong>Create or join the same rink. Claim Player 1 and Player 2, then turn sideways.</div>
-      <div><strong>02 / Find a big screen</strong>Open the same room on a separate screen and choose Watch the fight.</div>
+      <div><strong>02 / Find a big screen</strong>Open the same rink on a 3rd screen and choose Watch the fight.</div>
       <div><strong>03 / Fight for the upper hand</strong>The ice is slippery. So are your controls.</div></div>
-    <form id="joinform" class="join-form" novalidate><label for="code">Room code</label>
+    <form id="joinform" class="join-form" novalidate><label for="code">Rink code</label>
       <div class="join"><input id="code" name="code" placeholder="e.g. A1B2C3" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go" aria-describedby="codehint joinstatus" required><button id="watch" type="submit">Join a rink</button></div>
       <p id="codehint" class="field-hint">Six characters from your friend's rink.</p>
       <p id="joinstatus" class="feedback" role="status" aria-live="polite" aria-atomic="true"></p></form>
-    <p class="fine-print">5-minute rounds · punches + kicks · experimental prototype</p>
   </section>`;
   const code = app.querySelector('#code'), join = app.querySelector('#watch'), create = app.querySelector('#create');
   const joinStatus = app.querySelector('#joinstatus'), createStatus = app.querySelector('#createstatus');
@@ -48,7 +47,7 @@ export function renderHomepage(app) {
     code.value = value;
     if (!/^[A-F0-9]{6}$/.test(value)) {
       code.setAttribute('aria-invalid', 'true');
-      joinStatus.textContent = 'Enter a six-character room code using A–F and 0–9.';
+      joinStatus.textContent = 'Enter a six-character rink code using A–F and 0–9.';
       code.focus(); return;
     }
     setBusy(join, true, 'Finding rink…'); joinStatus.textContent = '';
@@ -72,16 +71,16 @@ export function renderHomepage(app) {
 }
 export function renderLobby(app, room) {
   app.innerHTML = `<section class="landing lobby"><h1>CLAIM<br><span>THE ICE.</span></h1>
-    <p class="lead">Two players. Two phones. A separate screen for the fight.</p>
+    <p class="lead">Two players. Two phones. A 3rd screen for the fight.</p>
     <div class="join role-actions"><button id="p0" type="button" disabled>Checking Player 1…</button><button id="p1" type="button" disabled>Checking Player 2…</button><a class="button button-secondary" href="/display/${room}">Watch the fight</a></div>
     <p id="roomstatus" class="feedback" role="status" aria-live="polite" aria-atomic="true"></p>
     <button id="retry" class="button-secondary" type="button" hidden>Check players again</button>
     <div class="card invite-card"><h2>Invite your opponent</h2>
       <img src="/qr?data=${encodeURIComponent(location.origin + location.pathname)}" width="220" height="220" alt="QR code to open this rink on another phone">
-      <div class="invite-details"><p>Same rink. Another phone.<br>Spectators can watch, too.</p><p class="room-code">Room code <strong>${room}</strong></p>
+      <div class="invite-details"><p>Same rink. Another phone.<br>Spectators can watch, too.</p><p class="room-code">Rink code <strong>${room}</strong></p>
         <a class="room-link" href="${location.pathname}">${location.origin}${location.pathname}</a></div>
     </div>
-    <details class="phone-help"><summary>More room on iPhone</summary><p>In Safari, choose Share → Add to Home Screen → Open as Web App. Launch from Home Screen before claiming a player.</p></details>
+    <details class="phone-help"><summary>More space on iPhone</summary><p>In Safari, choose Share → Add to Home Screen → Open as Web App. Launch from Home Screen before claiming a player.</p></details>
     <p class="back-link"><a href="/">Back to home / new rink</a></p>
   </section>`;
   const status = app.querySelector('#roomstatus'), retry = app.querySelector('#retry');

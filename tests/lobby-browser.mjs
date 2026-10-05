@@ -38,7 +38,7 @@ try {
   await page.locator('#code').press('Enter');await page.waitForFunction(()=>document.querySelector('#joinstatus').textContent.includes('closed'));
   assert.equal(await page.locator('#code').inputValue(),'ABCDEF');
   await page.unroute('**/api/rooms/ABCDEF');
-  for(const [status,match] of [[429,/Too many/],[503,/No room/],[500,/Could not create/]]) {
+  for(const [status,match] of [[429,/Too many/],[503,/No space/],[500,/Could not create/]]) {
     await page.route('**/api/rooms',route=>route.fulfill({status,body:'Unavailable'}));
     await page.locator('#create').click();await page.waitForFunction(()=>!document.querySelector('#create').disabled);
     assert.match(await page.locator('#createstatus').innerText(),match);await page.unroute('**/api/rooms');
