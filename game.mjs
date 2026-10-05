@@ -1,6 +1,7 @@
-import {recordMove,flingVelocity} from './public/puck-motion.js';
+import {recordMove,flingVelocity,MAX_DRAG,MAX_FLING,MAX_PUCK_SPEED} from './public/puck-motion.js';
+export {MAX_FLING};
 export const W = 900, H = 420, R = 37, HISTORY_TICKS = 120;
-export const GRAB_RADIUS = R * .72, TAP_RADIUS = R * .25, CENTER_IMPULSE = 6, CENTER_EDGE_IMPULSE = 6, TAP_TICKS = 12, EDGE_IMPULSE = 140, MAX_FLING = 620, BARRIER_DEPTH = 32;
+export const GRAB_RADIUS = R * .72, TAP_RADIUS = R * .25, CENTER_IMPULSE = 6, CENTER_EDGE_IMPULSE = 6, TAP_TICKS = 12, EDGE_IMPULSE = 140, BARRIER_DEPTH = 32;
 export const ATTACKS = {
  lp: {name:'Light punch', damage:5, reach:105, windup:.08, active:.10, recovery:.18, stun:.12, push:10},
  mp: {name:'Medium punch',damage:9,reach:125,windup:.14,active:.12,recovery:.28,stun:.18,push:18},
@@ -20,7 +21,7 @@ export class Game {
   this.fighters=[0,1].map(i=>({x:i?625:275,y:0,vy:0,hp:100,facing:i?-1:1,attack:null,cool:Object.fromEntries(Object.keys(ATTACKS).map(k=>[k,0])),stun:0}));
   this.pucks=[0,1].flatMap(owner=>actions.map((action,i)=>({id:`${owner}-${i}`,origin:owner,owner,epoch:0,action,x:90+(i%5)*180,y:120+Math.floor(i/5)*190,vx:(i%2?1:-1)*16,vy:8})));this.history=[];
  }
- validPose(p){return p&&['x','y','vx','vy'].every(k=>Number.isFinite(p[k]))&&p.x>=R&&p.x<=W-R&&p.y>=0&&p.y<=H-R&&Math.abs(p.vx)<=2000&&Math.abs(p.vy)<=2000;}
+ validPose(p){return p&&['x','y','vx','vy'].every(k=>Number.isFinite(p[k]))&&p.x>=R&&p.x<=W-R&&p.y>=0&&p.y<=H-R&&Math.hypot(p.vx,p.vy)<=MAX_PUCK_SPEED+1e-8;}
  motion(owner,m){
   if(!this.clientMotion||m.round!==this.round||m.controlEpoch!==this.controlEpoch||m.layoutEpoch!==this.layout.epoch||!this.connected[owner])return false;
   if(m.type==='motion'){
@@ -79,7 +80,7 @@ export class Game {
 
   const h={id:p.id,action:p.action,epoch:p.epoch,mode,touchTick:this.tick,tapVX:(d>1e-6?dx/d:0)*tapImpulse(d),tapVY:(d>1e-6?dy/d:-1)*tapImpulse(d),touchX:m.x,touchY:m.y,anchorX:p.x,anchorY:p.y,dragged:false,targetX:p.x,targetY:p.y,samples:[{tick:this.tick,x:p.x,y:p.y}],moves:Number.isFinite(m.at)?[{at:m.at,x:p.x,y:p.y}]:[]};
   this.pressed[owner].add(key);this.holds[owner].set(key,h);
-  if(!this.clientMotion){if(mode==='grab'){p.vx=p.vy=0;}else{const strength=tapImpulse(d);[p.vx,p.vy]=cap(p.vx+dx/d*strength,p.vy+dy/d*strength,320);}
+  if(!this.clientMotion){if(mode==='grab'){p.vx=p.vy=0;}else{const strength=tapImpulse(d);[p.vx,p.vy]=cap(p.vx+dx/d*strength,p.vy+dy/d*strength,MAX_PUCK_SPEED);}
   }
   this.lastTouch={actionAccepted:false,practice:!this.started};
   if(!this.started)return true;
@@ -123,15 +124,18 @@ export class Game {
   }
   const running=this.started&&this.connected.every(Boolean)&&this.active.every(Boolean)&&!this.result;
   if(!this.clientMotion&&((!this.started&&this.connected.some(Boolean))||running)){
+   let remaining=Math.min(.1,dt);
+   while(remaining>1e-9){let speed=0;for(const p of this.pucks){[p.vx,p.vy]=cap(p.vx,p.vy,MAX_PUCK_SPEED);const h=this.grabFor(p);speed=Math.max(speed,h?Math.min(MAX_DRAG,Math.hypot(h.targetX-p.x,h.targetY-p.y)/remaining):Math.hypot(p.vx,p.vy));}const slice=Math.min(remaining,(R/4)/Math.max(1,speed));
    for(const p of this.pucks){
     if(!this.started&&!this.connected[p.owner])continue;
     const h=this.grabFor(p);
-    if(h){const [dx,dy]=cap(h.targetX-p.x,h.targetY-p.y,1200*dt);p.x+=dx;p.y+=dy;p.vx=p.vy=0;h.samples.push({tick:this.tick,x:p.x,y:p.y});h.samples=h.samples.filter(s=>s.tick>=this.tick-6);}
-    else{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.exp(-.32*dt);p.vy*=Math.exp(-.32*dt);}
+    if(h){const [dx,dy]=cap(h.targetX-p.x,h.targetY-p.y,MAX_DRAG*slice);p.x+=dx;p.y+=dy;p.vx=p.vy=0;h.samples.push({tick:this.tick,x:p.x,y:p.y});h.samples=h.samples.filter(s=>s.tick>=this.tick-6);}
+    else{p.x+=p.vx*slice;p.y+=p.vy*slice;p.vx*=Math.exp(-.32*slice);p.vy*=Math.exp(-.32*slice);}
     if(p.x<R){p.x=R;p.vx=Math.abs(p.vx)*.95;}if(p.x>W-R){p.x=W-R;p.vx=-Math.abs(p.vx)*.95;}if(p.y>H-R){p.y=H-R;p.vy=-Math.abs(p.vy)*.95;}
     this.transfer(p);
    }
    this.collide();for(const p of this.pucks)this.transfer(p);
+   remaining-=slice;}
   }
   if(running){
    this.time=Math.max(0,this.time-dt);

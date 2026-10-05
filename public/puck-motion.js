@@ -1,3 +1,4 @@
+export const MAX_DRAG=12000, MAX_FLING=6200, MAX_PUCK_SPEED=24000;
 // Shared pointer sample rules. These are the server's existing fling rules, not a new force model.
 export function recordMove(moves, at, x, y) {
  if(!Number.isFinite(at)||(moves.length&&at<=moves.at(-1).at))return moves;
@@ -9,7 +10,7 @@ export function flingVelocity(moves, at) {
  if(!Number.isFinite(at)||moves.length<2)return null;
  const last=moves.at(-1),first=moves.find(s=>s.at>=last.at-100)||last;
  if(at<last.at||at-last.at>120||last.at<=first.at||Math.hypot(last.x-first.x,last.y-first.y)<8)return {vx:0,vy:0};
- const dt=Math.max(8,last.at-first.at)/1000,vx=(last.x-first.x)/dt,vy=(last.y-first.y)/dt,k=Math.min(1,620/(Math.hypot(vx,vy)||1));return {vx:vx*k,vy:vy*k};
+ const dt=Math.max(8,last.at-first.at)/1000,vx=(last.x-first.x)/dt,vy=(last.y-first.y)/dt,k=Math.min(1,MAX_FLING/(Math.hypot(vx,vy)||1));return {vx:vx*k,vy:vy*k};
 }
 // Visual only: server snapshots still decide collisions and ownership. Never invent a seam transfer.
 export function advance(p, seconds, waiting) {

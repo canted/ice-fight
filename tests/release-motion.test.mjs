@@ -1,11 +1,11 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {ReleaseMotion,advance,recordMove,flingVelocity} from '../public/puck-motion.js';import {Game} from '../game.mjs';
+import {ReleaseMotion,advance,recordMove,flingVelocity,MAX_FLING} from '../public/puck-motion.js';import {Game} from '../game.mjs';
 const puck={id:'0-0',owner:0,epoch:0,x:300,y:220,vx:300,vy:0};
 test('shared fling sampling exactly matches authority for fast, held, batched, stale, and stationary releases',()=>{
  for(const samples of [[[0,300],[16,308],[32,316],[48,324]],[[0,300],[700,300],[716,308],[732,316]],[[0,300],[10,320],[11,500]],[[0,300],[16,308],[200,308]],[[0,300],[16,308],[16,500],[32,316]]]){
   const g=new Game();g.connected[0]=true;const p=g.pucks[0];p.x=300;p.y=220;g.step();const input=(type,extra)=>g.input(0,{type,pointer:1,id:p.id,epoch:p.epoch,round:g.round,tick:g.tick,x:p.x,y:p.y,...extra});
   const anchor=p.x;input('touch',{at:0});let moves=[{at:0,x:anchor,y:p.y}];for(const [at,x]of samples.slice(1)){input('move',{at,x,y:220});const h=g.holds[0].get('1');if(h.dragged)moves=recordMove(moves,at,h.targetX,h.targetY);}
-  const at=samples.at(-1)[0];const expected=flingVelocity(moves,at);input('release',{fling:true,at});assert.equal(p.vx,expected.vx);assert.equal(p.vy,expected.vy);assert.ok(Math.hypot(p.vx,p.vy)<=620+1e-8);
+  const at=samples.at(-1)[0];const expected=flingVelocity(moves,at);input('release',{fling:true,at});assert.equal(p.vx,expected.vx);assert.equal(p.vy,expected.vy);assert.ok(Math.hypot(p.vx,p.vy)<=MAX_FLING+1e-8);
  }
 });
 test('release prediction moves immediately and ignores pre-release / out-of-order snapshots',()=>{
