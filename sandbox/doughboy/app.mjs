@@ -2,14 +2,14 @@ import {Dough} from './physics.mjs';
 import {drawFighter} from './fighter-art.mjs';
 const model=new Dough(),canvas=document.querySelector('canvas'),c=canvas.getContext('2d');let transform={s:1,x:0,y:0},last=performance.now(),acc=0,skeleton=false;
 const edge='#171b20';
-function cancel(){model.holds.clear();document.querySelector('#status').textContent='Feet & shins planted';}
+function cancel(){model.holds.clear();document.querySelector('#status').textContent='Grab and drag';}
 function reset(){cancel();model.reset();acc=0;}
-for(const key of ['softness','damping','upright'])document.querySelector('#'+key).oninput=e=>{model.settings[key]=Number(e.target.value);document.querySelector('#'+key+'-value').value=Math.round(model.settings[key]*100)+'%';};
-document.querySelector('#reset').onclick=reset;document.querySelector('#skeleton').onchange=e=>skeleton=e.target.checked;document.querySelector('#nudge').onclick=()=>{const head=model.node('head');head.px-=35;model.node('belly').px-=15;};
+for(const key of ['softness','damping','iceFriction','feetEffort','headEffort'])document.querySelector('#'+key).oninput=e=>{model.settings[key]=Number(e.target.value);document.querySelector('#'+key+'-value').value=Math.round(model.settings[key]*100)+'%';};
+document.querySelector('#reset').onclick=reset;document.querySelector('#skeleton').onchange=e=>skeleton=e.target.checked;for(const strength of ['light','medium','strong'])document.querySelector('#punch-'+strength).onclick=()=>model.punch(strength);
 function position(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left-transform.x)/transform.s,y:(e.clientY-r.top-transform.y)/transform.s};}
 canvas.onpointerdown=e=>{const p=position(e);if(model.grab(e.pointerId,p.x,p.y)){e.preventDefault();canvas.setPointerCapture(e.pointerId);document.querySelector('#status').textContent='Go on. Give him a stretch.';}};
 canvas.onpointermove=e=>{if(!model.holds.has(e.pointerId))return;e.preventDefault();const p=position(e);model.move(e.pointerId,p.x,p.y);};
-for(const ev of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(ev,e=>{model.release(e.pointerId);if(!model.holds.size)document.querySelector('#status').textContent='Feet & shins planted';});
+for(const ev of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(ev,e=>{model.release(e.pointerId);if(!model.holds.size)document.querySelector('#status').textContent='Grab and drag';});
 addEventListener('blur',cancel);document.addEventListener('visibilitychange',()=>{cancel();last=performance.now();acc=0;});addEventListener('keydown',e=>{if(e.key.toLowerCase()==='r'&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName))reset();});
 function resize(){cancel();const r=canvas.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1);canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);transform={s:Math.min(r.width/(r.width<600?630:760),r.height/610),x:0,y:0};transform.x=r.width/2-450*transform.s;transform.y=r.height-560*transform.s;}
 new ResizeObserver(resize).observe(canvas);

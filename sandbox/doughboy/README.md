@@ -1,51 +1,39 @@
 # Doughboy physics playground
 
-Run from the Ice Fight repository:
+Run `node sandbox/doughboy/serve.mjs` from the Ice Fight repository, then open http://localhost:3010/. The server binds to localhost. This playground is separate from the production game and is not included in its Docker image.
 
-```sh
-node sandbox/doughboy/serve.mjs
-```
+Drag body parts or individual skates. Pointer release/cancel/lost capture, blur, hidden page, resize, and reset clear holds. Reset with the button or R. Light punch, Medium punch, and Strong punch apply force directly to the head; the neck and body react through constraints. No automatic upright body snap is used.
 
-Open **http://localhost:3010/**. This server binds only to localhost and does not touch multiplayer routes, rooms, fighters, or deployment configuration. Stop with Ctrl+C in its terminal.
+## Current controls
 
-Drag the head, belly, upper legs, or arms. Feet, ankles and knees have zero inverse mass and remain exactly fixed. Reset with the button or R. Sliders adjust softness, damping, and the strength of the standing/rest-pose springs. At minimum stand-up effort the figure may remain slumped; this is intentional. “Give him a nudge” produces an impulse without dragging. “Show the joints” exposes the physical structure.
+- Softness: 60% default. Bounded waist tissue deformation grows from 3 to 12 logical units and its positional stiffness decreases as softness increases. This never stretches the skeleton to accommodate an impossible drag.
+- Damping: 85% default.
+- Ice friction: 10% default. Baseline horizontal skate drag coefficient is slider × 4 per second. Active recovery adds at most 0.3675 per second, scaled by feet effort and recovery demand, with smooth ±5% sinusoidal variation. Zero feet effort leaves baseline friction only. Drag uses exponential time-based velocity attenuation, with no stationary anchors.
+- Feet effort and Head effort: 60% each. Effort interpolates linearly along the authored anatomical height, from foot to head; arms inherit their shoulder-region weight. Folding or rotating the character cannot change these weights. Equal endpoints give uniform effort; both zero remove every upright restoring force. Applied spring/angle strength uses a cubic response, so maximum effort remains capable of full recovery while intermediate values yield to punches. The pelvis hinge has 1.4× the angular recovery gain of knees at equal effort. Shoulder spring gain is 2×, while neck gain is 0.4×; their angular stops are unchanged and both still lose all restoring force at zero local effort.
 
-A custom fixed-step120Hz Verlet/position-constraint ragdoll drives an original rounded Canvas silhouette. Distance constraints maintain limb lengths; compliant torso links allow squish; signed-area floors prevent inverted belly folds. Weak pose springs compete with gravity and soften during a drag. This is an articulated spring model, not a volumetric soft-body solver or a complete fighter. Limbs can overlap; there is no full self-collision, punching, walking, multiplayer, audio, or integration with the live fight.
+The three head impulses were doubled at the user's request: horizontal fixed-step velocity increments are 28 / 80 / 180 for Light / Medium / Strong, with a downward component 60% as large. Repeated input is capped at 180 horizontal and 108 vertical; the integration cap matches for a 0.25-second impact window. This preserves the requested increase rather than clipping all three to one speed. Reset clears the impact window. At default effort, Strong folds the upper body substantially; feet remain floor contacts by design.
 
-Pointer capture supports mouse/touch and multiple pointers. Pointerup, pointercancel, lost capture, blur, visibility changes, reset and resize release held parts. Resize scales only the presentation, leaving physical anchor coordinates unchanged. Animation pauses while hidden and caps catch-up after long frames.
+## Joint and structural limits
 
-Validation:
+The specifically requested **lowest torso articulation** is `pelvis / hips`: knee midpoint → pelvis → belly. It now permits **180° total, ±90° from neutral**. The earlier change to the higher `lower spine` hinge was reverted after clarification; that hinge remains ±110°. Upper spine is ±100°, neck ±90°, shoulders ±155°. Knees bend both directions within ±75°. Elbows retain mirrored one-way 2–145° flexion.
+
+Angular coordinates unwrap around the preceding constrained angle. This prevents a joint at one stop from switching to the opposite stop as its raw atan2 angle crosses ±180°. Limits are relative to parent segments, except shins, which remain within ±20° of world vertical.
+
+Independent floor contacts retain their left/right identities and never cross. Minimum skate separation is 70; maximum is derived by adding 15° TOTAL to the previous stance opening (7.5° per side), using thigh length and the previous 150-unit maximum. Bone/spine lengths are projected to a bounded skeleton; tissue offsets have separate bounded envelopes. The pelvis uses a simplified paired-leg support projection rather than a full 3D hip model. Full self-collision is not implemented, so limbs may overlap.
+
+## Validation
 
 ```sh
 node --test sandbox/doughboy/physics.test.mjs
 node sandbox/doughboy/browser-test.mjs
 ```
 
-The five physics tests cover one minute idle,20 vigorous drags, recovery, reset while held, all eight slider-extreme combinations, finite positions, exact anchor immobility, angular limits during extreme drags, and parent-frame rotation invariance. Chrome covers drag/flop/recovery, repeated vigorous dragging, reset while held, pointercancel and resizing, at1280×800 desktop and390×844 portrait. Pointer/touch APIs are implemented, but real iPhone Safari and physical multitouch are not verified. Screenshots, browser evidence and recording are under `test-results/doughboy/`.
+18 numerical tests cover both effort endpoints and anatomical blending, zero restoring force at zero effort, softness response, low/medium-friction full recovery, bounded smooth traction, stance widening/no crossing, floor/shin/angular limits, overhead hands, deep inverted-U release/recovery, wrapped angular stops, distinct doubled head impulses, repeated strong punches during opposing four-part drags, structural lengths, and reset.
 
-The preview inherits Ice Fight's Cherry Bomb One display face and coral/gold/mint family. The pale stage makes the red hockey fighter and body motion the focus; controls remain separate in a dark sidebar. The bare-hands and joint-limit decisions are recorded narrowly in the existing DESIGN.md; production game assets remain unchanged.
+The previously failing softness check used an obsolete >35-unit deformation expectation incompatible with the requested bounded torso. It now checks a material >8-unit difference within the 3–12-unit envelope. The knee assertion incorrectly demanded ±90° although the current knee stop is ±75°; it tests permitted ±60° in both directions while retaining the neck's ±90° check. The deep-fold fixture was unreachable under the bounded skeleton; it now uses a reachable belly position. Its release failure exposed a real angle-wrap branch flip, fixed by continuous angular coordinates.
 
-A fresh visual finish review returned **ship** for the local sandbox using the desktop standing/flop and mobile screenshots plus source inspection. Its optional canvas tab-stop issue was removed; ordinary controls and R remain keyboard accessible. This is not a claim of a full assistive-technology audit.
+Chrome checks the actual served Feet/Head/Ice friction controls, absence of the old single effort slider, three punch buttons, repeated Strong clicks, dragging/recovery, cancel/reset/resize, floor/joint limits, and desktop/390px layouts. Evidence is saved under `test-results/doughboy/`. Physical iPhone Safari and hardware multitouch remain unverified.
 
-## Banner-inspired fighter revision
+## Artwork
 
-The interactive renderer now follows the red/right fighter in the actual local banner `art/ice-fight-banner-cherry-v3.png`: red vented helmet, red/white hockey uniform and pads, striped socks, black laced skates, medium-brown skin, tousled hair, swollen cheek, squeezed-shut eye and crooked weary grimace. `fighter-art.mjs` draws the clothing and face directly from live rig points. No new raster assets were needed. The subsequent joint-limit request extends the solver as described below.
-
-The user explicitly chose **bare hands/fists**, overriding gloves in the reference. The lasting rule is recorded in root `DESIGN.md`, section “Fighter appearance”. Exposed wrists, knuckles and thumbs use the face's skin palette. Existing reference artwork and production game assets remain untouched by this sandbox revision.
-
-Attachment `libfile_7a53e957a464819192446fb541413573` could not be materialized because this executor exposes no Library read/materialize route; its pixels were not inspected. The inspected repo banner is the stated visual source, with red/right chosen as the default.
-
-## Anatomical joint limits
-
-Hard local angular limits supplement the soft distance/area constraints. Angles are measured between parent and child segments, never against screen axes. Each step projects child subtrees in anatomical order, so later elbow/neck corrections cannot undo an already-limited ancestor. Drag targets yield when the limb reaches a stop; the silhouette and torso links still squash and wobble.
-
-- Elbows: 2–145 degrees of flexion (interior angles35–178 degrees), opposite signed directions for the mirrored frontal arms.
-- Knees: 1–145 degrees of flexion (interior angles35–179 degrees), mirrored outward flexion; knees/ankles/feet stay fixed and the upper thigh moves.
-- Neck: ±40 degrees relative to its neutral parent/child angle.
-- Shoulders: ±80 degrees from each arm's neutral angle.
-- Pelvis/hips: ±65 degrees relative to the pelvis-to-knee-midpoint parent.
-- Lower and upper spine: ±38 and ±32 degrees from neutral.
-
-Neutral angles are captured from the authored standing rig on reset. The paired hips use one central pelvis hinge, a deliberate2D simplification rather than independent3D ball joints. This is a frontal mirrored cartoon stance; no axial twisting or full self-collision is modeled. Amber arcs under “Show the joints” display angular ranges.
-
-Five numerical tests now include30 extreme head/hand/hip/belly drags, exact fixed anchors, joint bounds after every step (tolerance1e-7 radians), and rotating the entire parent/body frame to prove limits are not screen-angle clamps. Chrome also checks joint bounds in the dragged flop pose, plus recovery/reset/cancel/resize. Real Safari touch hardware remains unverified.
+The procedural renderer follows the red/right fighter in `art/ice-fight-banner-cherry-v3.png`: red vented helmet, red/white hockey uniform, pads and skates, medium-brown skin, swollen cheek, asymmetrical weary face, and bare fists. Root DESIGN.md records the bare-hands decision. The attachment `libfile_7a53e957a464819192446fb541413573` was not accessible to this executor; its pixels were not inspected. No production art or runtime files are changed by this sandbox revision.

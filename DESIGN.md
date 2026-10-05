@@ -24,7 +24,7 @@ The unreliable environment is central to the entertainment. Players hustle to ga
 
 Keep the hockey clothing and other gear grounded in the banner: helmets, team jerseys, pads, striped socks, and skates, with exaggerated weary, swollen, punch-drunk facial expressions. The red/right fighter has medium-brown skin.
 
-The ragdoll experiment must use parent-relative anatomical joint limits: elbows and knees bend one way; neck, shoulders, hips and spine have bounded travel. Preserve a soft, yielding body and planted feet/shins rather than a rigid mannequin.
+The ragdoll experiment uses parent-relative limits with one-way elbows, but knees intentionally bend both ways per the later user correction. Allow fully overhead arms and neck tilt up to90° to either side of the torso. Keep skates in sliding floor contact and shins within ±20° of vertical while the upper body can fold into an inverted U. Default damping is85%;100% softness must be materially yielding, and0% stand-up effort must remove all upright restoring influence. Wider hip/spine travel must support that flop rather than enforce a rigid mannequin.
 
 Recorded October 5, 2026 at the user's explicit request. Applied to the local doughboy playground in this revision. This decision does not itself authorize rewriting the original banner or production assets; preserve those until a separately scoped update.
 
@@ -91,3 +91,5 @@ The October 5 cleanup preserves the existing arcade identity rather than establi
 - Essential setup instructions explain the two phones and separate display. Mechanics copy invites play without teaching grab, drag, or fling gestures.
 
 Controller copy, puck counts, combat rules, and controller interaction remain outside this cleanup.
+
+Sandbox tuning: independent sliding skates retain left/right identity, floor contact and bounded stance; shins stay within ±20° of vertical. The lowest torso joint (`pelvis / hips`, knee midpoint → pelvis → belly) is ±90° from neutral. Feet effort and Head effort interpolate by authored anatomy, with no upright force at both zero. Ice friction has its own low-default slider and capped recovery grip. Three head punches use distinct doubled impulses; hands remain bare. Shoulder springs are stiffer and neck springs softer, without changing their angular stops. Full solver parameters and current validation are in `sandbox/doughboy/README.md`.
