@@ -1,5 +1,13 @@
 # Ice Fight — quick experimental prototype
 
+## Local homepage and lobby cleanup
+
+Homepage and room setup now use validated keyboard-submittable room entry, accessible inline feedback, loading/disabled states, network retries, guarded player-link storage, and styled expired-room recovery. The invitation layout adapts to narrow phones. Shared arcade action styles and shorter discovery-oriented copy preserve the original visual identity and game behavior.
+
+The original artwork and social-sharing PNG remain intact. Responsive 400/800/1200 px WebP display images reduce banner transfer size by approximately 98%/94%/89% versus the PNG. Static assets use ETag revalidation so changed files are fetched while unchanged responses can return 304.
+
+Validation: `npm test` (49 tests), `npm run build`, `node tests/lobby-browser.mjs`, `node tests/phone-flow.mjs`, `node tests/banner-browser.mjs`, and `node tests/waiting-browser.mjs` passed locally. Homepage/lobby captures cover 1440×900, 768×1024, 390×844, 320×568, and 844×390, plus 200% root text scaling. Physical iPhone Safari and production network performance remain unverified. This cleanup has not been deployed.
+
 Two landscape phone controllers, each a top-down ice table full of moving action pucks, plus any practical number of independent read-only fight displays. Original arcade banner with a medium-brown-skinned red fighter now used for the lobby and share image. The gameplay still uses its lightweight procedural cartoon fighters.
 
 Current local motion architecture and measured before/after results: [owning-controller authority](docs/owner-motion.md). This revision is **not deployed**. Earlier validation/revision notes below are historical unless linked from that document.
