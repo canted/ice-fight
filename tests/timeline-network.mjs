@@ -12,7 +12,7 @@ try{
  }
  await until(()=>players.every(p=>p.c.ready&&p.state?.connected.every(Boolean)),'synchronized players');
  const mirrors=[];for(let i=0;i<2;i++){const ws=new WebSocket(base.replace('http','ws')),states=new Map();sockets.push(ws);mirrors.push(states);ws.on('open',()=>ws.send(JSON.stringify({type:'join',role:'display',room:room.id})));ws.on('message',raw=>{const m=JSON.parse(raw);if(m.type==='state'||m.type==='fight')states.set(m.type+':'+m.tick,m);});}
- const start=performance.now()+80;const input=(p,type,puck,at,extra={})=>({type,seq:++p.seq,round:p.state.round,controlEpoch:p.state.controlEpoch,layoutEpoch:p.state.layout.epoch,tick:p.state.tick,pointer:1,id:puck.id,epoch:puck.epoch,x:puck.x,y:puck.y,at:at+p.origin,eventTime:p.c.toServer(at+p.origin),...extra});
+ const start=performance.now()+80;const input=(p,type,puck,at,extra={})=>({type,seq:++p.seq,round:p.state.round,controlEpoch:p.state.controlEpoch,layoutEpoch:p.state.layout.epoch,tick:p.state.tick,pointer:1,id:puck.id,epoch:puck.epoch,x:puck.x,y:puck.y,pose:{x:puck.x,y:puck.y,vx:puck.vx,vy:puck.vy},at:at+p.origin,eventTime:p.c.toServer(at+p.origin),...extra});
  const sent=[];for(const [i,p]of players.entries()){
   const puck=p.state.pucks.find(q=>q.owner===i&&q.action==='hp'),at=start+i*50,m=input(p,'touch',puck,at);sent.push(m);setTimeout(()=>p.send(m),Math.max(0,at-performance.now()));
  }

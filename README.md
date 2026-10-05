@@ -2,6 +2,8 @@
 
 Two landscape phone controllers, each a top-down ice table full of moving action pucks, plus any practical number of independent read-only fight displays. Original arcade banner with a medium-brown-skinned red fighter now used for the lobby and share image. The gameplay still uses its lightweight procedural cartoon fighters.
 
+Current local motion architecture and measured before/after results: [owning-controller authority](docs/owner-motion.md). This revision is **not deployed**. Earlier validation/revision notes below are historical unless linked from that document.
+
 ## Run
 
 Node 22+:
@@ -17,7 +19,7 @@ Room links are public invitations; first claim wins atomically. Player credentia
 
 ## Controls / rules
 
-Every control floats: left, right, up (one jump), down (hold crouch), and light/medium/heavy punches plus light/medium/heavy kicks (LP/MP/HP/LK/MK/HK): ten per player, twenty total. Grab within the central72% of the puck diameter (radius0.72R). Tap force is independent: a quick tap within25% gives a constant6-unit nudge; farther out it rises to140 at the edge. A sustained grab stays pinned. It stops autonomous movement, follows your finger with bounded server-authoritative drag speed, and releases with sampled fling velocity (max620 logical units/sec). Hold still before lifting to release without a fling. Outside that center, shove strength rises continuously from6 to the unchanged edge maximum140, directed away from contact; physics shove still works during recovery. Push up through the green seam to transfer the puck to the opponent. It becomes their action, with a stable ID, new ownership epoch, and unchanged ORIGINAL color. Current ownership is determined by which phone holds it, not by its color. The tables face each other: x and local velocity reverse at the seam. Pucks collide across the seam too.
+Every control floats: left, right, up (one jump), down (hold crouch), and light/medium/heavy punches plus light/medium/heavy kicks (LP/MP/HP/LK/MK/HK): ten per player, twenty total. Grab within the central72% of the puck diameter (radius0.72R). Tap force is independent: a quick tap within25% gives a constant6-unit nudge; farther out it rises to140 at the edge. A sustained grab stays pinned. It stops autonomous movement, follows your finger with bounded controller-owned drag speed, and releases with sampled fling velocity (max620 logical units/sec). Hold still before lifting to release without a fling. Outside that center, shove strength rises continuously from6 to the unchanged edge maximum140, directed away from contact; physics shove still works during recovery. Push up through the green seam to transfer the puck to the opponent. It becomes their action, with a stable ID, new ownership epoch, and unchanged ORIGINAL color. Current ownership is determined by which phone holds it, not by its color. The tables face each other: x and local velocity reverse at the seam. Collisions are resolved by the owning phone on its half; an incoming puck begins colliding there after its edge frame.
 
 Hold left/right/down with the original finger even as the puck moves away. Up/attacks fire only on touchdown, never when a puck drifts under a stationary finger. Release/cancel/lost capture/blur/hidden/resize/disconnect/transfer clears holds. Duplicate actions share movement and attack cooldowns. Hitting a puck still pushes it when your fighter is recovering. Attacks commit forward and strike a target once. Idle grounded fighters auto-face the opponent. Visual wobble never destabilizes gameplay roots.
 
@@ -25,11 +27,11 @@ Hold left/right/down with the original finger even as the puck moves away. Up/at
 
 ## Implementation / tuning
 
-Node HTTP + ws, browser Canvas 2D, no bundler/framework/database. `game.mjs` owns both rink halves and fighters at 60Hz in real time, with gameplay input processed immediately on receipt; 20Hz snapshots, interpolated controller pucks. Fight display uses latest authoritative state. Lightweight JS runtime and checked TypeScript wire contract (`protocol.ts`); this is **not** a fully type-checked TS application. `npm run build` validates the contract/project config; there is no bundled build output.
+Node HTTP + ws, browser Canvas 2D, no bundler/framework/database. `public/owner-rink.js` continuously owns each controller’s puck physics at 120Hz, with no server reconciliation. `game.mjs` resolves fighters at 60Hz and coordinates atomic ownership transfers. Controllers report motion at about30Hz; the server relays20Hz snapshots for mirrors and reconnect checkpoints. Gameplay input processes immediately on receipt. Fight display uses latest authoritative state. Lightweight JS runtime and checked TypeScript wire contract (`protocol.ts`); this is **not** a fully type-checked TS application. `npm run build` validates the contract/project config; there is no bundled build output.
 
-Input requires monotonic sequence, round, current owner and ownership epoch, and contact against bounded server history (up to 120 ticks / 2s). Future ticks rejected. Server handles seam ownership and hold release in the same simulation step. Messages/payloads/slow-client buffers are bounded. WebSocket ping detects dead transport in roughly 2–4 seconds. Single process stores rooms in RAM: restart/deploy loses all rooms. Demo guards: 100 rooms, 10 creations/IP/minute, 600 HTTP requests/IP/minute, 30 socket joins/IP/minute, 200 total sockets, 34 clients/room (two players plus32 viewers), 150 messages/socket/second, and a50MiB/hour snapshot-stream admission guard that rejects NEW rooms/spectators after the threshold while current matches and authenticated player reconnects continue. Capacity errors are displayed with a reload-to-retry instruction. This reduces growth during a traffic spike but does not bound active-match egress, HTTP assets, upstream DDoS, or the provider invoice; no hard billing cap. Room creation limited to100; inactive rooms expire after one hour. No public matchmaking.
+Input requires monotonic sequence, round, current owner and ownership epoch, and contact against the owning client’s supplied current puck pose, with a bounded tick age (120 ticks / 2s). Future ticks are rejected. Server validates current ownership/epochs and handles seam ownership and hold release atomically on receipt. Messages/payloads/slow-client buffers are bounded. WebSocket ping detects dead transport in roughly 2–4 seconds. Single process stores rooms in RAM: restart/deploy loses all rooms. Demo guards: 100 rooms, 10 creations/IP/minute, 600 HTTP requests/IP/minute, 30 socket joins/IP/minute, 200 total sockets, 34 clients/room (two players plus32 viewers), 150 messages/socket/second, and a50MiB/hour snapshot-stream admission guard that rejects NEW rooms/spectators after the threshold while current matches and authenticated player reconnects continue. Capacity errors are displayed with a reload-to-retry instruction. This reduces growth during a traffic spike but does not bound active-match egress, HTTP assets, upstream DDoS, or the provider invoice; no hard billing cap. Room creation limited to100; inactive rooms expire after one hour. No public matchmaking.
 
-Tune `W`, `H`, `R`, drag/impulse/speed, movement/reach/cooldowns in `game.mjs`; `new Game({roundSeconds:300})` controls round duration. Client drawing uses the same900×420 logical table and radius37; change both client and server if tuning geometry. No prediction/rollback. Real network jitter, touch ergonomics and balance need playtesting.
+Tune puck drag/impulse/speed in `public/owner-rink.js`, shared fling sampling in `public/puck-motion.js`, and movement/reach/cooldowns in `game.mjs`; `new Game({roundSeconds:300})` controls round duration. Client drawing uses the same900×420 logical table and radius37; change both client and server if tuning geometry. No prediction/rollback. Real network jitter, touch ergonomics and balance need playtesting.
 
 ## Validation
 
@@ -37,11 +39,9 @@ Tune `W`, `H`, `R`, drag/impulse/speed, movement/reach/cooldowns in `game.mjs`; 
 npm test
 npm run build
 # Server running at localhost:3000, installed Google Chrome:
-node tests/browser.mjs
-node tests/phone-flow.mjs
-node tests/playtest-browser.mjs
-node tests/banner-browser.mjs
-node tests/waiting-browser.mjs
+TEST_URL=http://localhost:3000 node tests/owner-trajectories-browser.mjs
+TEST_URL=http://localhost:3000 node tests/owner-lifecycle-browser.mjs
+TEST_URL=http://localhost:3000 node tests/timeline-network.mjs
 # Recreate original procedural share art:
 node scripts/share-placeholder.mjs
 ```
@@ -110,4 +110,4 @@ Kick square paths are60×60 instead of50×50 (+20% width/height); rounded corner
 
 Visible hit-area mismatch is intentional under the unchanged circular-physics requirement: hexagon tips extend1.5 logical pixels past the touch circle; rounded square corners extend about3.44 pixels, before outline thickness. Decorative edges may slightly overlap at collision contact or clip at the outer canvas wall. The waiting barrier still clears the enlarged vertical shape extents. These are visual-only changes, tested locally; deployment needs approval for this revision.
 
-Local networking revision: controller clocks synchronize to the server; attacks process immediately on receipt and credit elapsed event time against windup, without an input buffer. Incoming transfers first paint at the seam and blend over 250ms. See [networking policy and validation](docs/controller-timing.md) for late-event and entry-catch tradeoffs. Not yet deployed.
+Local networking revision: controller clocks synchronize to the server; attacks process immediately on receipt and credit elapsed event time against windup, without an input buffer. Incoming transfers first paint at the seam and continue under recipient-owned physics. See [networking policy and validation](docs/controller-timing.md) for late-event and entry-catch tradeoffs. Not yet deployed.

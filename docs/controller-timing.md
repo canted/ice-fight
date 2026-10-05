@@ -1,5 +1,8 @@
 # Controller time, incoming edge presentation, and fight authority
 
+**Motion policy superseded:** see [continuous owning-controller authority](owner-motion.md). The temporary prediction,250ms entry blend and server puck correction described below are historical; timestamp-based combat remains unchanged.
+
+
 Local no-buffer revision replacing the unpublished `8baacc8` timing policy, while retaining the `d2ddeda` release fix; not deployed. The user's clarified policy is to favor the home controller's timing and visible position, introduce incoming pucks only at the shared edge, and keep the fight on one coherent authoritative timeline.
 
 ## Input time and immediate combat

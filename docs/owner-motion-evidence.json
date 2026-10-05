@@ -1,0 +1,536 @@
+{
+  "before": [
+    {
+      "speedWindows": [
+        {
+          "fromMs": 200,
+          "toMs": 700,
+          "samples": 25,
+          "renderedToPhysicsSpeed": 0.7426945670394056
+        },
+        {
+          "fromMs": 800,
+          "toMs": 1300,
+          "samples": 30,
+          "renderedToPhysicsSpeed": 0.782354637549248
+        },
+        {
+          "fromMs": 1500,
+          "toMs": 2500,
+          "samples": 60,
+          "renderedToPhysicsSpeed": 1.0001196007302917
+        }
+      ],
+      "kind": "slow",
+      "jitter": false,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 0,
+      "maxBackwardPx": 0,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 18.300000190734863
+    },
+    {
+      "speedWindows": [
+        {
+          "fromMs": 200,
+          "toMs": 700,
+          "samples": 27,
+          "renderedToPhysicsSpeed": 0.7694750746689037
+        },
+        {
+          "fromMs": 800,
+          "toMs": 1300,
+          "samples": 29,
+          "renderedToPhysicsSpeed": 0.7337960259662315
+        },
+        {
+          "fromMs": 1500,
+          "toMs": 2500,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        }
+      ],
+      "kind": "fast",
+      "jitter": false,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 4.936619094750085,
+      "maxBackwardPx": 0,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 30.59999990463257
+    },
+    {
+      "speedWindows": [
+        {
+          "fromMs": 200,
+          "toMs": 700,
+          "samples": 9,
+          "renderedToPhysicsSpeed": -0.6612316568833818
+        },
+        {
+          "fromMs": 800,
+          "toMs": 1300,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        },
+        {
+          "fromMs": 1500,
+          "toMs": 2500,
+          "samples": 6,
+          "renderedToPhysicsSpeed": 0.11557045782459248
+        }
+      ],
+      "kind": "wall",
+      "jitter": false,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 9.384234400339892,
+      "maxBackwardPx": 9.384234400339892,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 18.90000009536743
+    },
+    {
+      "speedWindows": [
+        {
+          "fromMs": 200,
+          "toMs": 700,
+          "samples": 5,
+          "renderedToPhysicsSpeed": 0.5246716585786817
+        },
+        {
+          "fromMs": 800,
+          "toMs": 1300,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        },
+        {
+          "fromMs": 1500,
+          "toMs": 2500,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        }
+      ],
+      "kind": "collision",
+      "jitter": false,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 13.016196797876034,
+      "maxBackwardPx": 13.016196797876034,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 19.399999618530273
+    },
+    {
+      "speedWindows": [
+        {
+          "fromMs": 200,
+          "toMs": 700,
+          "samples": 17,
+          "renderedToPhysicsSpeed": 0.7287742238785467
+        },
+        {
+          "fromMs": 800,
+          "toMs": 1300,
+          "samples": 26,
+          "renderedToPhysicsSpeed": 0.7577454468070793
+        },
+        {
+          "fromMs": 1500,
+          "toMs": 2500,
+          "samples": 51,
+          "renderedToPhysicsSpeed": 0.7955330852898491
+        }
+      ],
+      "kind": "slow",
+      "jitter": true,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 0,
+      "maxBackwardPx": 0,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 19.90000009536743
+    },
+    {
+      "speedWindows": [
+        {
+          "fromMs": 200,
+          "toMs": 700,
+          "samples": 17,
+          "renderedToPhysicsSpeed": 0.7079831772488594
+        },
+        {
+          "fromMs": 800,
+          "toMs": 1300,
+          "samples": 26,
+          "renderedToPhysicsSpeed": 0.4279253411277516
+        },
+        {
+          "fromMs": 1500,
+          "toMs": 2500,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        }
+      ],
+      "kind": "fast",
+      "jitter": true,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 5.595560423490156,
+      "maxBackwardPx": 0,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 19.199999809265137
+    },
+    {
+      "speedWindows": [
+        {
+          "fromMs": 200,
+          "toMs": 700,
+          "samples": 5,
+          "renderedToPhysicsSpeed": -0.6887836271083642
+        },
+        {
+          "fromMs": 800,
+          "toMs": 1300,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        },
+        {
+          "fromMs": 1500,
+          "toMs": 2500,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        }
+      ],
+      "kind": "wall",
+      "jitter": true,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 9.76620235829364,
+      "maxBackwardPx": 9.76620235829364,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 19.59999990463257
+    },
+    {
+      "speedWindows": [
+        {
+          "fromMs": 200,
+          "toMs": 700,
+          "samples": 1,
+          "renderedToPhysicsSpeed": 0.6685129592482136
+        },
+        {
+          "fromMs": 800,
+          "toMs": 1300,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        },
+        {
+          "fromMs": 1500,
+          "toMs": 2500,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        }
+      ],
+      "kind": "collision",
+      "jitter": true,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 18.906274059569228,
+      "maxBackwardPx": 0,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 19.5
+    }
+  ],
+  "after": [
+    {
+      "speedWindows": [
+        {
+          "fromMs": 200,
+          "toMs": 700,
+          "samples": 30,
+          "renderedToPhysicsSpeed": 1.009662060011147
+        },
+        {
+          "fromMs": 800,
+          "toMs": 1300,
+          "samples": 30,
+          "renderedToPhysicsSpeed": 0.9909229844590757
+        },
+        {
+          "fromMs": 1500,
+          "toMs": 2500,
+          "samples": 60,
+          "renderedToPhysicsSpeed": 0.9922730624424994
+        }
+      ],
+      "kind": "slow",
+      "jitter": false,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 0,
+      "maxBackwardPx": 0,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 20.59999990463257
+    },
+    {
+      "speedWindows": [
+        {
+          "fromMs": 200,
+          "toMs": 700,
+          "samples": 30,
+          "renderedToPhysicsSpeed": 1.011110623212323
+        },
+        {
+          "fromMs": 800,
+          "toMs": 1300,
+          "samples": 30,
+          "renderedToPhysicsSpeed": 0.9969606044580335
+        },
+        {
+          "fromMs": 1500,
+          "toMs": 2500,
+          "samples": 19,
+          "renderedToPhysicsSpeed": 0.9676490675713307
+        }
+      ],
+      "kind": "fast",
+      "jitter": false,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 0,
+      "maxBackwardPx": 0,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 17
+    },
+    {
+      "speedWindows": [
+        {
+          "fromMs": 200,
+          "toMs": 700,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        },
+        {
+          "fromMs": 800,
+          "toMs": 1300,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        },
+        {
+          "fromMs": 1500,
+          "toMs": 2500,
+          "samples": 20,
+          "renderedToPhysicsSpeed": 0.9728912261559926
+        }
+      ],
+      "kind": "wall",
+      "jitter": false,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 13.771367432450575,
+      "maxBackwardPx": 13.771367432450575,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 18.40000009536743
+    },
+    {
+      "speedWindows": [
+        {
+          "fromMs": 200,
+          "toMs": 700,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        },
+        {
+          "fromMs": 800,
+          "toMs": 1300,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        },
+        {
+          "fromMs": 1500,
+          "toMs": 2500,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        }
+      ],
+      "kind": "collision",
+      "jitter": false,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 0,
+      "maxBackwardPx": 0,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 19.600000381469727
+    },
+    {
+      "speedWindows": [
+        {
+          "fromMs": 200,
+          "toMs": 700,
+          "samples": 30,
+          "renderedToPhysicsSpeed": 1.0133191344756018
+        },
+        {
+          "fromMs": 800,
+          "toMs": 1300,
+          "samples": 30,
+          "renderedToPhysicsSpeed": 1.0161911497543767
+        },
+        {
+          "fromMs": 1500,
+          "toMs": 2500,
+          "samples": 60,
+          "renderedToPhysicsSpeed": 0.9992046949930097
+        }
+      ],
+      "kind": "slow",
+      "jitter": true,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 0,
+      "maxBackwardPx": 0,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 18.199999809265137
+    },
+    {
+      "speedWindows": [
+        {
+          "fromMs": 200,
+          "toMs": 700,
+          "samples": 30,
+          "renderedToPhysicsSpeed": 0.9795072472553138
+        },
+        {
+          "fromMs": 800,
+          "toMs": 1300,
+          "samples": 9,
+          "renderedToPhysicsSpeed": 1.0027432037927795
+        },
+        {
+          "fromMs": 1500,
+          "toMs": 2500,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        }
+      ],
+      "kind": "fast",
+      "jitter": true,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 10.550948557810443,
+      "maxBackwardPx": 0,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 31.90000009536743
+    },
+    {
+      "speedWindows": [
+        {
+          "fromMs": 200,
+          "toMs": 700,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        },
+        {
+          "fromMs": 800,
+          "toMs": 1300,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        },
+        {
+          "fromMs": 1500,
+          "toMs": 2500,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        }
+      ],
+      "kind": "wall",
+      "jitter": true,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 11.2886001620235,
+      "maxBackwardPx": 11.2886001620235,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 20
+    },
+    {
+      "speedWindows": [
+        {
+          "fromMs": 200,
+          "toMs": 700,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        },
+        {
+          "fromMs": 800,
+          "toMs": 1300,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        },
+        {
+          "fromMs": 1500,
+          "toMs": 2500,
+          "samples": 0,
+          "renderedToPhysicsSpeed": null
+        }
+      ],
+      "kind": "collision",
+      "jitter": true,
+      "simulatedOneWayDelayMs": 100,
+      "maxBackwardThroughHandoffPx": 0,
+      "maxBackwardPx": 0,
+      "maxFreezeMs": 0,
+      "firstMotionMs": 17.800000190734863
+    }
+  ],
+  "lifecycle": {
+    "clients": 4,
+    "landscapeHeights": [
+      390,
+      320
+    ],
+    "oneWayDelayMs": 100,
+    "jitter": true,
+    "crossingDelayMs": 281,
+    "firstTransferredPaint": {
+      "id": "0-0",
+      "x": 460.2691135582628,
+      "y": 0,
+      "epoch": 1
+    },
+    "checks": [
+      "seam transfer",
+      "return transfer",
+      "edge first paint",
+      "regrab",
+      "pointer cancel",
+      "two simultaneous holds",
+      "lost capture",
+      "resize",
+      "old owner rejection",
+      "visibility pause/resume",
+      "disconnect/reconnect",
+      "20 unique IDs",
+      "two read-only displays"
+    ],
+    "browserErrors": []
+  },
+  "combat": {
+    "bufferMs": 0,
+    "controllers": [
+      {
+        "player": 0,
+        "oneWayDelayMs": 160,
+        "clockOrigin": 50000,
+        "clockRttMs": 320.70000000000437,
+        "eventTime": 40303.328708,
+        "effectiveTime": 40462.792083,
+        "lateMs": 159.46337499999936,
+        "receiptToProcessingMs": 0.09033400000043912,
+        "initialAttackAge": 0.15946337499999935
+      },
+      {
+        "player": 1,
+        "oneWayDelayMs": 20,
+        "clockOrigin": -900000,
+        "clockRttMs": 42.46675000002142,
+        "eventTime": 40352.336167,
+        "effectiveTime": 40373.873208,
+        "lateMs": 21.537040999995952,
+        "receiptToProcessingMs": 0.4129590000011376,
+        "initialAttackAge": 0.02153704099999595
+      }
+    ],
+    "authoredGapMs": 49.00745900000038,
+    "appliedGapMs": -88.91887500000303,
+    "lateEvent": {
+      "lateMs": 809.5528339999946,
+      "effectiveTime": 41764.672583
+    },
+    "identicalMirrorSnapshots": 43
+  }
+}
