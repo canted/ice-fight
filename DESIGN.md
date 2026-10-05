@@ -18,6 +18,16 @@ Preserve these elements:
 
 The unreliable environment is central to the entertainment. Players hustle to gain the upper hand while the controls themselves slip away. Chasing controls, stealing a friend's best move, and chaotic fighting all contribute to the fun.
 
+## Fighter appearance
+
+**Bare hands are a lasting character-design rule.** Ice Fight fighters have visible bare hands and clenched fists, with skin tone consistent with their faces. Do not give them hockey gloves, boxing gloves, or padded mitts. This user decision overrides gloves shown in reference artwork.
+
+Keep the hockey clothing and other gear grounded in the banner: helmets, team jerseys, pads, striped socks, and skates, with exaggerated weary, swollen, punch-drunk facial expressions. The red/right fighter has medium-brown skin.
+
+The ragdoll experiment must use parent-relative anatomical joint limits: elbows and knees bend one way; neck, shoulders, hips and spine have bounded travel. Preserve a soft, yielding body and planted feet/shins rather than a rigid mannequin.
+
+Recorded October 5, 2026 at the user's explicit request. Applied to the local doughboy playground in this revision. This decision does not itself authorize rewriting the original banner or production assets; preserve those until a separately scoped update.
+
 ## Competition and failure
 
 Luck is an important factor in the chaos. Skill and clever, improvised techniques should still let a player gain an advantage.
